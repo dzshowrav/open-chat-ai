@@ -984,8 +984,16 @@ export const App: React.FC = () => {
         {activeDialog === 'themes-switcher' && (
           <Box justifyContent="center" marginY={1}>
             <ThemeSwitcherDialog
+              onPreview={(themeId) => {
+                themeManager.setTheme(themeId);
+                stateManager.setState({ activeThemeId: themeId } as any);
+              }}
               onSelect={handleThemeSelect}
-              onClose={() => setActiveDialog('none')}
+              onClose={(revertThemeId) => {
+                themeManager.setTheme(revertThemeId);
+                stateManager.setState({ activeThemeId: revertThemeId } as any);
+                setActiveDialog('none');
+              }}
             />
           </Box>
         )}

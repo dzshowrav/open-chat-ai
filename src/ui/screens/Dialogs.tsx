@@ -1279,22 +1279,29 @@ export const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({ initia
 
 // --- Theme Switcher Dialog ---
 interface ThemeSwitcherDialogProps {
+  onPreview: (themeId: string) => void;
   onSelect: (themeId: string) => void;
-  onClose: () => void;
+  onClose: (revertThemeId: string) => void;
 }
 
-export const ThemeSwitcherDialog: React.FC<ThemeSwitcherDialogProps> = ({ onSelect, onClose }) => {
+export const ThemeSwitcherDialog: React.FC<ThemeSwitcherDialogProps> = ({ onPreview, onSelect, onClose }) => {
   const currentTheme = themeManager.getCurrentTheme();
   const themeIds = Object.keys(BUILT_IN_THEMES);
   const [selectedIndex, setSelectedIndex] = useState(themeIds.indexOf(currentTheme.id) !== -1 ? themeIds.indexOf(currentTheme.id) : 0);
+  const [initialThemeId] = useState(currentTheme.id);
 
   const VP = 8;
   const viewStart = Math.max(0, Math.min(selectedIndex - Math.floor(VP / 2), themeIds.length - VP));
   const visibleThemeIds = themeIds.slice(viewStart, viewStart + VP);
 
+  // Trigger preview on index change
+  useEffect(() => {
+    onPreview(themeIds[selectedIndex]);
+  }, [selectedIndex]);
+
   useInput((input: string, key: any) => {
     if (key.escape) {
-      onClose();
+      onClose(initialThemeId);
       return;
     }
     if (key.upArrow) {

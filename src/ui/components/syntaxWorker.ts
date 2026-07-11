@@ -338,13 +338,30 @@ function isAlignmentLine(line: string | undefined): boolean {
 
 /**
  * Parse a table row string into an array of cell content strings.
+ * Handles escaped pipes (\|) correctly as specified in dev2.md.
  */
 function parseTableRow(line: string): string[] {
-  return line
-    .trim()
-    .replace(/^\||\|$/g, '') // strip leading/trailing pipes
-    .split('|')
-    .map((cell) => cell.trim());
+  const trimmed = line.trim().replace(/^\||\|$/g, '');
+  const cells: string[] = [];
+  let current = '';
+  let inEscape = false;
+
+  for (let i = 0; i < trimmed.length; i++) {
+    if (trimmed[i] === '\\' && !inEscape) {
+      inEscape = true;
+      continue;
+    }
+    if (trimmed[i] === '|' && !inEscape) {
+      cells.push(current.trim());
+      current = '';
+      continue;
+    }
+    current += trimmed[i];
+    inEscape = false;
+  }
+  cells.push(current.trim());
+
+  return cells;
 }
 
 /**

@@ -4,6 +4,13 @@ import { eventBus } from './events.js';
 import { DatabaseSync } from 'node:sqlite';
 import { registerBuiltInTools } from '../tools/impl/index.js';
 import { McpManager } from '../mcp/mcpManager.js';
+import { APP_VERSION } from './constants.js';
+import { fileURLToPath } from 'node:url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const installRoot = path.resolve(__dirname, '../../');
 
 export class AppEngine {
   private db: DatabaseSync | null = null;
@@ -31,6 +38,9 @@ export class AppEngine {
 
       // Load default provider & model
       this.loadActiveModel();
+
+      // Check for updates asynchronously
+      this.checkForUpdates();
 
       // Initialize MCP servers
       await McpManager.init();
@@ -105,5 +115,62 @@ export class AppEngine {
     McpManager.disconnectAll();
     closeDatabase();
     process.exit(code);
+  }
+
+  private async checkForUpdates(): Promise<void> {
+    try {
+      const response = await fetch('https://raw.githubusercontent.com/dzshowrav/open-chat-ai/master/package.json');
+      if (response.ok) {
+        const data = await response.json() as { version: string };
+        if (data && data.version) {
+          const latest = data.version;
+          const current = APP_VERSION;
+          
+          if (latest !== current) {
+            const parseVer = (v: string) => v.split('.').map(Number);
+            const lParts = parseVer(latest);
+            const cParts = parseVer(current);
+            let newer = false;
+            for (let i = 0; i < 3; i++) {
+              if (lParts[i] > cParts[i]) {
+                newer = true;
+                break;
+              } else if (lParts[i] < cParts[i]) {
+                break;
+              }
+            }
+            if (newer) {
+              stateManager.setState({ isUpdateAvailable: true, latestVersion: latest });
+            }
+          }
+        }
+      }
+    } catch (err) {
+      // Fail silently (no connection, etc)
+    }
+  }
+
+  async updateToLatest(): Promise<boolean> {
+    const fs = await import('fs');
+    const path = await import('path');
+    const exec = (await import('child_process')).exec;
+
+    return new Promise((resolve) => {
+      const hasGit = fs.existsSync(path.join(installRoot, '.git'));
+      const command = hasGit
+        ? 'git pull && npm install && npm run build'
+        : 'npm install -g git+https://github.com/dzshowrav/open-chat-ai.git';
+
+      const execOptions = hasGit ? { cwd: installRoot } : {};
+
+      exec(command, execOptions, (error) => {
+        if (error) {
+          console.error(`Update error: ${error.message}`);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
   }
 }

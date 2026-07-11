@@ -87,6 +87,11 @@ export interface CommandSpec {
 
 export const BUILT_IN_COMMANDS: CommandSpec[] = [
   {
+    command: '/update latest',
+    description: 'Fetch and update OpenChat AI to the latest version',
+    usage: '/update latest'
+  },
+  {
     command: '/provider api',
     description: 'Add a new OpenAI-compatible provider API endpoint',
     usage: '/provider api'

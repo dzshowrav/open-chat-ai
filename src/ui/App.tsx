@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
 import { stateManager, AppState } from '../core/state.js';
+import { AppEngine } from '../core/engine.js';
 import { eventBus } from '../core/events.js';
 import { themeManager } from './theme/themeManager.js';
 import { StatusBar } from './components/StatusBar.js';
@@ -313,8 +314,39 @@ export const App: React.FC = () => {
       setActiveDialog('tools-list');
     } else if (cmd === '/permissions') {
       setActiveDialog('tool-permissions');
+    } else if (cmd === '/update latest') {
+      setActiveDialog('question-prompt');
+      setPendingQuestionRequest({
+        question: state.isUpdateAvailable 
+          ? `A new version (v${state.latestVersion}) is available. Do you want to update now?`
+          : 'You are on the latest version. Do you want to force reinstall/update anyway?',
+        options: ['Yes, update now', 'No, cancel'],
+        resolve: async (answer) => {
+          setPendingQuestionRequest(null);
+          if (answer === 'Yes, update now') {
+            setActiveDialog('none');
+            stateManager.setState({ activeToolName: 'Updating OpenChat AI...' });
+            
+            const engine = new AppEngine();
+            const success = await engine.updateToLatest();
+            
+            stateManager.setState({ activeToolName: null });
+            if (success) {
+              stateManager.setState({ errorMsg: 'Update successful! Please restart OpenChat AI to apply changes.' });
+              setTimeout(() => {
+                exit();
+                process.exit(0);
+              }, 3000);
+            } else {
+              stateManager.setState({ errorMsg: 'Update failed! Please check your network connection.' });
+            }
+          } else {
+            setActiveDialog('none');
+          }
+        }
+      });
     } else if (cmd === '/help') {
-      stateManager.setState({ errorMsg: 'Slash commands: /provider api, /add model, /all models, /agents, /skills, /history, /mcp, /tools, /permissions, /settings, /help, /exit' });
+      stateManager.setState({ errorMsg: 'Slash commands: /update latest, /provider api, /add model, /all models, /agents, /skills, /history, /mcp, /tools, /permissions, /settings, /help, /exit' });
     } else if (cmd === '/exit') {
       exit();
       setTimeout(() => process.exit(0), 50);

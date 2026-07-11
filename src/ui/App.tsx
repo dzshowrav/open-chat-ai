@@ -39,11 +39,13 @@ import { ContextBuilder } from '../core/contextBuilder.js';
 import { ToolManager } from '../tools/toolManager.js';
 
 const renderPromptPreview = (text: string) => {
-  if (!text) return null;
+  if (!text) {
+    return <Text color="gray">Ask AI anything... (Type / for commands)</Text>;
+  }
 
   const lines = text.split('\n');
   const isMultiLine = lines.length > 1;
-  const isVeryLong = text.length > 150;
+  const isVeryLong = text.length > 300;
 
   if (isMultiLine || isVeryLong) {
     const linesCount = lines.length;
@@ -212,6 +214,12 @@ export const App: React.FC = () => {
       return;
     }
 
+    if (key.ctrl && input === 'l') {
+      // Clear terminal screen
+      process.stdout.write('\x1b[2J\x1b[H');
+      return;
+    }
+
     // Let CommandPalette handle these navigation/action keys completely
     if (showCommandPalette && (key.upArrow || key.downArrow || key.return || key.escape)) {
       return; 
@@ -236,12 +244,13 @@ export const App: React.FC = () => {
       return;
     }
 
-    if (input) {
+    if (input && !key.ctrl && !key.meta) {
       if (prompt === '' && input === '/') {
         if (state.currentScreen === 'home') process.stdout.write('\x1b[2J\x1b[H');
         setShowCommandPalette(true);
       }
-      setPrompt(prev => prev + input);
+      const cleanInput = input.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      setPrompt(prev => prev + cleanInput);
     }
   });
 

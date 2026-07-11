@@ -1204,5 +1204,107 @@ export const QuestionDialog: React.FC<QuestionDialogProps> = ({ question, option
   );
 };
 
+// --- Backup & Restore Dialog ---
+interface BackupRestoreDialogProps {
+  initialMode: 'backup' | 'restore';
+  onSubmit: (mode: 'backup' | 'restore', path: string) => void;
+  onClose: () => void;
+}
+
+export const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({ initialMode, onSubmit, onClose }) => {
+  const theme = themeManager.getCurrentTheme();
+  const [mode, setMode] = useState<'backup' | 'restore'>(initialMode);
+  const [filePath, setFilePath] = useState('backup.json');
+  const [activeField, setActiveField] = useState(0); // 0: Action Select (mode), 1: File Path, 2: Run button
+
+  useInput((input: string, key: any) => {
+    if (key.escape) {
+      onClose();
+      return;
+    }
+    if (key.upArrow || (key.tab && key.shift)) {
+      setActiveField(prev => (prev > 0 ? prev - 1 : 2));
+      return;
+    }
+    if (key.downArrow || key.tab) {
+      setActiveField(prev => (prev < 2 ? prev + 1 : 0));
+      return;
+    }
+
+    if (activeField === 0) {
+      if (key.leftArrow || key.rightArrow) {
+        setMode(prev => (prev === 'backup' ? 'restore' : 'backup'));
+      }
+    }
+
+    if (key.return) {
+      if (activeField === 2) {
+        onSubmit(mode, filePath);
+      } else {
+        setActiveField(prev => (prev < 2 ? prev + 1 : 2));
+      }
+    }
+  });
+
+  return (
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={70}>
+      <Text color={theme.primaryColor} bold>Backup & Restore Credentials</Text>
+      
+      <Box flexDirection="column" marginY={1}>
+        {/* Row 1: Action Type */}
+        <Box flexDirection="row" marginY={0.2}>
+          <Text color={activeField === 0 ? 'cyan' : 'white'} bold={activeField === 0}>
+            {"Action:         ".padEnd(16)}
+          </Text>
+          <Box flexDirection="row">
+            <Text 
+              color={mode === 'backup' ? (activeField === 0 ? 'black' : 'green') : 'gray'}
+              backgroundColor={mode === 'backup' && activeField === 0 ? 'cyan' : undefined}
+              bold={mode === 'backup'}
+            >
+              [ Backup ]
+            </Text>
+            <Text>   </Text>
+            <Text 
+              color={mode === 'restore' ? (activeField === 0 ? 'black' : 'green') : 'gray'}
+              backgroundColor={mode === 'restore' && activeField === 0 ? 'cyan' : undefined}
+              bold={mode === 'restore'}
+            >
+              [ Restore ]
+            </Text>
+          </Box>
+        </Box>
+
+        {/* Row 2: File Path */}
+        <Box flexDirection="row" marginY={0.2}>
+          <Text color={activeField === 1 ? 'cyan' : 'white'} bold={activeField === 1}>
+            {"File Path:      ".padEnd(16)}
+          </Text>
+          <TextInput 
+            value={filePath} 
+            onChange={setFilePath} 
+            active={activeField === 1} 
+            placeholder="e.g. backup.json" 
+          />
+        </Box>
+      </Box>
+
+      <Box flexDirection="row" justifyContent="space-between" marginY={1}>
+        <Box flexDirection="row">
+          <Text 
+            color={activeField === 2 ? 'black' : theme.primaryColor} 
+            bold={activeField === 2} 
+            backgroundColor={activeField === 2 ? theme.primaryColor : undefined}
+          >
+            {mode === 'backup' ? " [ Start Backup ] " : " [ Start Restore ] "}
+          </Text>
+        </Box>
+        <Text color="gray">Arrows: Navigate/Change • ENTER: Select/Execute • ESC: Cancel</Text>
+      </Box>
+    </Box>
+  );
+};
+
+
 
 

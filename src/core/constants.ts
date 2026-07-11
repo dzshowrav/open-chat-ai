@@ -1,5 +1,21 @@
+import { fileURLToPath } from 'url';
+import path from 'path';
+import fs from 'fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+let version = '1.0.0';
+try {
+  const packageJsonPath = path.resolve(__dirname, '../../package.json');
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+  version = packageJson.version || '1.0.0';
+} catch (e) {
+  // fallback to default
+}
+
 export const APP_NAME = 'OpenChat CLI';
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = version;
 
 export const DATABASE_FILENAME = 'openchat.db';
 
@@ -155,6 +171,16 @@ export const BUILT_IN_COMMANDS: CommandSpec[] = [
     command: '/uninstall',
     description: 'Completely uninstall OpenChat AI from this system',
     usage: '/uninstall'
+  },
+  {
+    command: '/backup',
+    description: 'Backup AI credentials (providers and models) to backup.json',
+    usage: '/backup'
+  },
+  {
+    command: '/restore',
+    description: 'Restore AI credentials (providers and models) from backup.json',
+    usage: '/restore'
   },
   {
     command: '/exit',

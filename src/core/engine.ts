@@ -155,10 +155,11 @@ export class AppEngine {
     const path = await import('path');
     const exec = (await import('child_process')).exec;
 
+    const hasGit = fs.existsSync(path.join(installRoot, '.git'));
+
     return new Promise((resolve) => {
-      const hasGit = fs.existsSync(path.join(installRoot, '.git'));
       const command = hasGit
-        ? 'git pull && npm install && npm run build'
+        ? 'git checkout package-lock.json && git pull && npm install && npm run build'
         : 'npm install -g git+https://github.com/dzshowrav/open-chat-ai.git';
 
       const execOptions = hasGit ? { cwd: installRoot } : {};

@@ -22,7 +22,8 @@ import {
   McpListDialog,
   ToolsListDialog,
   ToolPermissionsDialog,
-  QuestionDialog
+  QuestionDialog,
+  BackupRestoreDialog
 } from './screens/Dialogs.js';
 import { ProviderRepository } from '../database/repositories/providerRepository.js';
 import { ModelRepository } from '../database/repositories/modelRepository.js';
@@ -30,7 +31,7 @@ import { SessionRepository } from '../database/repositories/sessionRepository.js
 import { SettingRepository } from '../database/repositories/settingRepository.js';
 import { AgentRepository } from '../database/repositories/agentRepository.js';
 import { SkillsManager, Skill } from '../skills/skillsManager.js';
-import { initDatabase } from '../database/connection.js';
+import { initDatabase, runInTransaction } from '../database/connection.js';
 import { Message, Provider, Model, Agent, Session } from '../types/index.js';
 import { ApiEngine } from '../api/apiEngine.js';
 import { ContextBuilder } from '../core/contextBuilder.js';
@@ -57,7 +58,8 @@ export const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
 
   // Dialog-specific states
-  const [activeDialog, setActiveDialog] = useState<'none' | 'provider-form' | 'provider-list' | 'model-form' | 'model-switcher' | 'settings' | 'permissions' | 'agent-switcher' | 'history-switcher' | 'skills-list' | 'mcp-list' | 'tools-list' | 'tool-permissions' | 'question-prompt'>('none');
+  const [activeDialog, setActiveDialog] = useState<'none' | 'provider-form' | 'provider-list' | 'model-form' | 'model-switcher' | 'settings' | 'permissions' | 'agent-switcher' | 'history-switcher' | 'skills-list' | 'mcp-list' | 'tools-list' | 'tool-permissions' | 'question-prompt' | 'backup-restore'>('none');
+  const [backupRestoreMode, setBackupRestoreMode] = useState<'backup' | 'restore'>('backup');
   const [availableModels, setAvailableModels] = useState<Array<Model & { provider_name: string }>>([]);
   const [availableProviders, setAvailableProviders] = useState<Provider[]>([]);
   const [editingProvider, setEditingProvider] = useState<Provider | undefined>(undefined);
@@ -378,8 +380,11 @@ export const App: React.FC = () => {
           }
         }
       });
+    } else if (cmd === '/backup' || cmd === '/restore' || cmd === '/backup & restore') {
+      setBackupRestoreMode(cmd === '/restore' ? 'restore' : 'backup');
+      setActiveDialog('backup-restore');
     } else if (cmd === '/help') {
-      stateManager.setState({ errorMsg: 'Slash commands: /update latest, /uninstall, /provider api, /add model, /all models, /agents, /skills, /history, /mcp, /tools, /permissions, /settings, /help, /exit' });
+      stateManager.setState({ errorMsg: 'Slash commands: /update latest, /uninstall, /provider api, /add model, /all models, /agents, /skills, /history, /mcp, /tools, /permissions, /settings, /backup, /restore, /help, /exit' });
     } else if (cmd === '/exit') {
       terminateMarkdownWorker();
       exit();
@@ -641,6 +646,129 @@ export const App: React.FC = () => {
     setActiveDialog('none');
   };
 
+  const handleBackupRestoreSubmit = async (mode: 'backup' | 'restore', filePath: string) => {
+    setActiveDialog('none');
+    const fs = await import('fs');
+    
+    if (mode === 'backup') {
+      try {
+        const providers = providerRepo.listProviders();
+        const models = modelRepo.listModels();
+        const data = {
+          version: '1.0.0',
+          timestamp: new Date().toISOString(),
+          providers,
+          models
+        };
+        fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+        stateManager.setState({ errorMsg: `Backup saved successfully to: ${filePath}` });
+      } catch (err: any) {
+        stateManager.setState({ errorMsg: `Backup failed: ${err.message}` });
+      }
+    } else {
+      try {
+        if (!fs.existsSync(filePath)) {
+          stateManager.setState({ errorMsg: `Restore failed: File not found at ${filePath}` });
+          return;
+        }
+        const raw = fs.readFileSync(filePath, 'utf-8');
+        const data = JSON.parse(raw);
+        if (!data || !Array.isArray(data.providers)) {
+          stateManager.setState({ errorMsg: 'Restore failed: Invalid backup file format.' });
+          return;
+        }
+
+        const db = initDatabase();
+        runInTransaction(db, () => {
+          const providerIdMap: Record<number, number> = {};
+          
+          for (const prov of data.providers) {
+            const existing = providerRepo.getProviderByName(prov.name);
+            let provId: number;
+            if (existing) {
+              provId = existing.id!;
+              providerRepo.updateProvider(provId, {
+                base_url: prov.base_url,
+                api_key: prov.api_key,
+                description: prov.description,
+                status: prov.status,
+                latency: prov.latency
+              });
+            } else {
+              provId = providerRepo.addProvider({
+                name: prov.name,
+                base_url: prov.base_url,
+                api_key: prov.api_key,
+                description: prov.description,
+                status: prov.status,
+                latency: prov.latency
+              });
+            }
+            providerIdMap[prov.id] = provId;
+          }
+
+          if (Array.isArray(data.models)) {
+            for (const model of data.models) {
+              const newProvId = providerIdMap[model.provider_id];
+              if (!newProvId) continue;
+              
+              const existing = modelRepo.getModelByStringId(newProvId, model.model_id);
+              if (existing) {
+                modelRepo.updateModel(existing.id!, {
+                  display_name: model.display_name,
+                  description: model.description,
+                  category: model.category,
+                  supports_streaming: model.supports_streaming,
+                  supports_tools: model.supports_tools,
+                  supports_reasoning: model.supports_reasoning,
+                  supports_vision: model.supports_vision,
+                  supports_json: model.supports_json,
+                  supports_audio: model.supports_audio,
+                  supports_embedding: model.supports_embedding,
+                  max_context: model.max_context,
+                  max_output: model.max_output,
+                  enabled: model.enabled
+                });
+              } else {
+                modelRepo.addModel({
+                  provider_id: newProvId,
+                  model_id: model.model_id,
+                  display_name: model.display_name,
+                  description: model.description,
+                  category: model.category,
+                  supports_streaming: model.supports_streaming,
+                  supports_tools: model.supports_tools,
+                  supports_reasoning: model.supports_reasoning,
+                  supports_vision: model.supports_vision,
+                  supports_json: model.supports_json,
+                  supports_audio: model.supports_audio,
+                  supports_embedding: model.supports_embedding,
+                  max_context: model.max_context,
+                  max_output: model.max_output
+                });
+              }
+            }
+          }
+        });
+
+        // Trigger reload of default/active model
+        const defaultProvider = db.prepare("SELECT id FROM providers WHERE is_default = 1").get() as { id: number } | undefined;
+        if (defaultProvider) {
+          stateManager.setState({ activeProviderId: defaultProvider.id });
+          const activeModel = db.prepare("SELECT model_id FROM models WHERE provider_id = ? AND enabled = 1 ORDER BY favorite DESC, id ASC LIMIT 1").get(defaultProvider.id) as { model_id: string } | undefined;
+          if (activeModel) {
+            stateManager.setState({ activeModelId: activeModel.model_id });
+            eventBus.emit('model:changed', { modelId: activeModel.model_id, providerId: defaultProvider.id });
+          }
+        }
+        
+        stateManager.setState({ errorMsg: 'Restore completed successfully!' });
+      } catch (err: any) {
+        stateManager.setState({ errorMsg: `Restore failed: ${err.message}` });
+      }
+    }
+  };
+
   return (
     <Box flexDirection="column" width="100%" padding={1}>
       <Box flexDirection="column" flexGrow={1}>
@@ -794,6 +922,16 @@ export const App: React.FC = () => {
         {activeDialog === 'tool-permissions' && (
           <Box justifyContent="center" marginY={1}>
             <ToolPermissionsDialog
+              onClose={() => setActiveDialog('none')}
+            />
+          </Box>
+        )}
+
+        {activeDialog === 'backup-restore' && (
+          <Box justifyContent="center" marginY={1}>
+            <BackupRestoreDialog
+              initialMode={backupRestoreMode}
+              onSubmit={handleBackupRestoreSubmit}
               onClose={() => setActiveDialog('none')}
             />
           </Box>

@@ -98,9 +98,9 @@ OpenChat AI implements a granular permission model. You can configure tools to r
 
 ---
 
-## Troubleshooting & Reset
+## Troubleshooting, Reset & Uninstallation
 
-If you want to perform a clean reinstall or reset the application back to its fresh default state (wiping all saved providers, API keys, AI models, and chat history):
+If you want to reset the application back to its fresh default state (wiping all saved providers, API keys, AI models, and chat history):
 
 ```bash
 # Reset the database to a fresh state
@@ -108,4 +108,16 @@ oc --clean
 
 # Or via npm scripts in the repository folder:
 npm run clean:db
+```
+
+### Complete Uninstallation
+
+To completely uninstall OpenChat AI from your system (including deleting the global SQLite database, logs, settings directories, and removing the global `oc` CLI tool link):
+
+```bash
+# Uninstall via the global CLI directly
+oc --uninstall
+
+# Or via npm scripts in the repository folder:
+npm run uninstall
 ```

@@ -6,8 +6,52 @@ import { eventBus } from './core/events.js';
 import App from './ui/App.js';
 import { getDbPath } from './database/connection.js';
 import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 async function main() {
+  if (process.argv.includes('--uninstall')) {
+    const dbPath = getDbPath();
+    const openChatDir = path.dirname(dbPath); // ~/.openchat
+    
+    console.log('Uninstalling OpenChat AI...');
+    
+    // 1. Remove database folder
+    if (fs.existsSync(openChatDir)) {
+      try {
+        fs.rmSync(openChatDir, { recursive: true, force: true });
+        console.log('Removed global storage directory: ~/.openchat');
+      } catch (err) {
+        console.error('Failed to remove global storage directory:', err instanceof Error ? err.message : String(err));
+      }
+    }
+    
+    // 2. Remove configuration folder if exists
+    const homePath = os.homedir();
+    const configDir = path.join(homePath, '.config', 'openchat');
+    if (fs.existsSync(configDir)) {
+      try {
+        fs.rmSync(configDir, { recursive: true, force: true });
+        console.log('Removed configuration directory: ~/.config/openchat');
+      } catch (err) {
+        console.error('Failed to remove configuration directory:', err instanceof Error ? err.message : String(err));
+      }
+    }
+
+    // 3. Remove global npm package
+    console.log('Removing global npm package/link...');
+    try {
+      const execSync = (await import('child_process')).execSync;
+      execSync('npm uninstall -g openchat-ai', { stdio: 'inherit' });
+      console.log('Uninstalled openchat-ai globally.');
+    } catch (err) {
+      console.log('Could not automatically run global npm uninstall. You may need to run: npm uninstall -g openchat-ai');
+    }
+    
+    console.log('OpenChat AI successfully uninstalled.');
+    process.exit(0);
+  }
+
   if (process.argv.includes('--clean') || process.argv.includes('--reset')) {
     const dbPath = getDbPath();
     if (fs.existsSync(dbPath)) {

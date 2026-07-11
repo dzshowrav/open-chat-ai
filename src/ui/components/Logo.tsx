@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 import { themeManager } from '../theme/themeManager.js';
+import { APP_VERSION } from '../../core/constants.js';
 
 export const Logo: React.FC = () => {
   const theme = themeManager.getCurrentTheme();
@@ -20,7 +21,7 @@ export const Logo: React.FC = () => {
         `}
       </Text>
       <Text color={theme.accentColor} italic>
-        Universal AI Coding Agent for Termux • v1.0
+        Universal AI Coding Agent for Termux • v{APP_VERSION}
       </Text>
     </Box>
   );

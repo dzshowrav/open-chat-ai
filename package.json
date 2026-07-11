@@ -1,0 +1,29 @@
+{
+  "name": "openchat-ai",
+  "version": "1.0.0",
+  "description": "A Universal OpenAI-Compatible AI Coding Agent for Termux",
+  "main": "dist/index.js",
+  "bin": {
+    "oc": "./dist/index.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "node node_modules/typescript/bin/tsc && mkdir -p dist/database && cp src/database/schema.sql dist/database/schema.sql && chmod +x dist/index.js",
+    "start": "node --experimental-specifier-resolution=node dist/index.js",
+    "dev": "node node_modules/typescript/bin/tsc -w",
+    "postinstall": "node install-font.js"
+  },
+  "dependencies": {
+    "cli-highlight": "^2.1.11",
+    "dotenv": "^16.4.5",
+    "ink": "^4.4.1",
+    "marked": "^18.0.6",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/marked": "^5.0.2",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.1",
+    "typescript": "^5.5.0"
+  }
+}

@@ -1,4 +1,4 @@
-import { initDatabase, closeDatabase } from '../database/connection.js';
+import { initDatabase, closeDatabase, getDbPath } from '../database/connection.js';
 import { stateManager } from './state.js';
 import { eventBus } from './events.js';
 import { DatabaseSync } from 'node:sqlite';
@@ -172,5 +172,66 @@ export class AppEngine {
         }
       });
     });
+  }
+
+  async uninstall(): Promise<boolean> {
+    const fs = await import('fs');
+    const path = await import('path');
+    const os = await import('os');
+    const exec = (await import('child_process')).exec;
+
+    const dbPath = getDbPath();
+    const openChatDir = path.dirname(dbPath); // ~/.openchat
+    const homePath = os.homedir();
+    const configDir = path.join(homePath, '.config', 'openchat');
+
+    return new Promise((resolve) => {
+      // 1. Remove database folder
+      if (fs.existsSync(openChatDir)) {
+        try {
+          fs.rmSync(openChatDir, { recursive: true, force: true });
+        } catch (err) {
+          console.error('Failed to remove global storage directory:', err);
+        }
+      }
+
+      // 2. Remove configuration folder
+      if (fs.existsSync(configDir)) {
+        try {
+          fs.rmSync(configDir, { recursive: true, force: true });
+        } catch (err) {
+          console.error('Failed to remove configuration directory:', err);
+        }
+      }
+
+      // 3. Uninstall global package
+      exec('npm uninstall -g openchat-ai', (error) => {
+        if (error) {
+          console.error(`Uninstall error: ${error.message}`);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  }
+
+  async clean(): Promise<void> {
+    const fs = await import('fs');
+    const dbPath = getDbPath();
+    if (fs.existsSync(dbPath)) {
+      fs.unlinkSync(dbPath);
+      console.log('Database cleaned up successfully (fresh installation state).');
+    } else {
+      console.log('No database found to clean up.');
+    }
+    const walPath = dbPath + '-wal';
+    const shmPath = dbPath + '-shm';
+    if (fs.existsSync(walPath)) {
+      try { fs.unlinkSync(walPath); } catch {}
+    }
+    if (fs.existsSync(shmPath)) {
+      try { fs.unlinkSync(shmPath); } catch {}
+    }
   }
 }

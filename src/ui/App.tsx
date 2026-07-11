@@ -314,6 +314,35 @@ export const App: React.FC = () => {
       setActiveDialog('tools-list');
     } else if (cmd === '/permissions') {
       setActiveDialog('tool-permissions');
+    } else if (cmd === '/uninstall') {
+      setActiveDialog('question-prompt');
+      setPendingQuestionRequest({
+        question: 'Are you sure you want to completely uninstall OpenChat AI from this system? This will delete all settings and history.',
+        options: ['Yes, uninstall now', 'No, cancel'],
+        resolve: async (answer) => {
+          setPendingQuestionRequest(null);
+          if (answer === 'Yes, uninstall now') {
+            setActiveDialog('none');
+            stateManager.setState({ activeToolName: 'Uninstalling OpenChat AI...' });
+            
+            const engine = new AppEngine();
+            const success = await engine.uninstall();
+            
+            stateManager.setState({ activeToolName: null });
+            if (success) {
+              stateManager.setState({ errorMsg: 'Uninstallation complete. Goodbye!' });
+              setTimeout(() => {
+                exit();
+                process.exit(0);
+              }, 3000);
+            } else {
+              stateManager.setState({ errorMsg: 'Uninstallation failed! Please check your permissions or uninstall manually: npm uninstall -g openchat-ai' });
+            }
+          } else {
+            setActiveDialog('none');
+          }
+        }
+      });
     } else if (cmd === '/update latest') {
       setActiveDialog('question-prompt');
       setPendingQuestionRequest({
@@ -346,7 +375,7 @@ export const App: React.FC = () => {
         }
       });
     } else if (cmd === '/help') {
-      stateManager.setState({ errorMsg: 'Slash commands: /update latest, /provider api, /add model, /all models, /agents, /skills, /history, /mcp, /tools, /permissions, /settings, /help, /exit' });
+      stateManager.setState({ errorMsg: 'Slash commands: /update latest, /uninstall, /provider api, /add model, /all models, /agents, /skills, /history, /mcp, /tools, /permissions, /settings, /help, /exit' });
     } else if (cmd === '/exit') {
       exit();
       setTimeout(() => process.exit(0), 50);

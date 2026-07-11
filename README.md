@@ -95,3 +95,17 @@ OpenChat AI implements a granular permission model. You can configure tools to r
 * **Allow Once:** Allow execution for the current turn.
 * **Ask:** Prompt with an interactive multiple-choice selector.
 * **Deny:** Prevent tool execution.
+
+---
+
+## Troubleshooting & Reset
+
+If you want to perform a clean reinstall or reset the application back to its fresh default state (wiping all saved providers, API keys, AI models, and chat history):
+
+```bash
+# Reset the database to a fresh state
+oc --clean
+
+# Or via npm scripts in the repository folder:
+npm run clean:db
+```

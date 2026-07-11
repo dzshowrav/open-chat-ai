@@ -82,10 +82,10 @@ export const ProviderListDialog: React.FC<ProviderListDialogProps> = ({ provider
   }
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={70}>
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={60}>
       <Text color={theme.primaryColor} bold>Configured Providers</Text>
       
-      <Box flexDirection="column" marginY={1}>
+      <Box flexDirection="column" marginY={0.5}>
         {providers.map((provider, idx) => {
           const isSelected = idx === selectedIndex;
           const bg = isSelected ? theme.primaryColor : undefined;
@@ -102,7 +102,9 @@ export const ProviderListDialog: React.FC<ProviderListDialogProps> = ({ provider
           );
         })}
       </Box>
-      <Text color="gray" italic>Arrows: Navigate • ENTER: Edit • ESC: Close</Text>
+      <Box justifyContent="center">
+        <Text color="gray" italic>Arrows: Navigate • ENTER: Edit • ESC: Close</Text>
+      </Box>
     </Box>
   );
 };
@@ -184,36 +186,36 @@ export const ProviderDialog: React.FC<ProviderDialogProps> = ({ initialProvider,
   };
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={70}>
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={60}>
       <Text color={theme.primaryColor} bold>{initialProvider ? 'Edit Provider' : 'Add OpenAI-Compatible Provider'}</Text>
       
-      <Box flexDirection="column" marginY={1}>
+      <Box flexDirection="column" marginY={0.5}>
         <Box flexDirection="row" marginY={0.2}>
-          <Text color={activeField === 0 ? 'cyan' : 'white'} bold={activeField === 0}>{"Provider Name:  ".padEnd(16)}</Text>
+          <Text color={activeField === 0 ? 'cyan' : 'white'} bold={activeField === 0}>{"Name: ".padEnd(7)}</Text>
           <TextInput value={name} onChange={setName} active={activeField === 0} placeholder="e.g. OpenCode Zen" />
         </Box>
         <Box flexDirection="row" marginY={0.2}>
-          <Text color={activeField === 1 ? 'cyan' : 'white'} bold={activeField === 1}>{"Base URL:       ".padEnd(16)}</Text>
+          <Text color={activeField === 1 ? 'cyan' : 'white'} bold={activeField === 1}>{"URL:  ".padEnd(7)}</Text>
           <TextInput value={baseUrl} onChange={setBaseUrl} active={activeField === 1} placeholder="https://api.openai.com/v1" />
         </Box>
         <Box flexDirection="row" marginY={0.2}>
-          <Text color={activeField === 2 ? 'cyan' : 'white'} bold={activeField === 2}>{"API Key:        ".padEnd(16)}</Text>
+          <Text color={activeField === 2 ? 'cyan' : 'white'} bold={activeField === 2}>{"Key:  ".padEnd(7)}</Text>
           <TextInput value={apiKey} onChange={setApiKey} active={activeField === 2} mask="*" placeholder="sk-..." />
         </Box>
         <Box flexDirection="row" marginY={0.2}>
-          <Text color={activeField === 3 ? 'cyan' : 'white'} bold={activeField === 3}>{"Description:    ".padEnd(16)}</Text>
+          <Text color={activeField === 3 ? 'cyan' : 'white'} bold={activeField === 3}>{"Desc: ".padEnd(7)}</Text>
           <TextInput value={description} onChange={setDescription} active={activeField === 3} placeholder="Optional notes" />
         </Box>
       </Box>
 
       {testResult && (
-        <Box marginY={1}>
+        <Box marginY={0.5}>
           <Text color={testResult.startsWith('Success') ? 'green' : 'red'}>{testResult}</Text>
         </Box>
       )}
 
-      <Box flexDirection="row" justifyContent="space-between" marginY={1}>
-        <Box flexDirection="row">
+      <Box flexDirection="column" marginY={0.5}>
+        <Box flexDirection="row" justifyContent="space-between" marginY={0.2}>
           <Text 
             color={activeField === 4 ? 'black' : 'cyan'} 
             bold={activeField === 4} 
@@ -221,17 +223,17 @@ export const ProviderDialog: React.FC<ProviderDialogProps> = ({ initialProvider,
           >
             {" [ Test Connection ] "}
           </Text>
-          <Box marginLeft={2}>
-            <Text 
-              color={activeField === 5 ? 'black' : theme.primaryColor} 
-              bold={activeField === 5} 
-              backgroundColor={activeField === 5 ? theme.primaryColor : undefined}
-            >
-              {" [ Save Provider ] "}
-            </Text>
-          </Box>
+          <Text 
+            color={activeField === 5 ? 'black' : theme.primaryColor} 
+            bold={activeField === 5} 
+            backgroundColor={activeField === 5 ? theme.primaryColor : undefined}
+          >
+            {" [ Save Provider ] "}
+          </Text>
         </Box>
-        <Text color="gray">ESC: Cancel</Text>
+        <Box justifyContent="center" marginTop={0.5}>
+          <Text color="gray">Arrows: Navigate • ESC: Cancel</Text>
+        </Box>
       </Box>
     </Box>
   );
@@ -342,40 +344,40 @@ export const AddModelDialog: React.FC<AddModelDialogProps> = ({ providers, onSub
     : 'No providers configured (run /provider api)';
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={70}>
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={60}>
       <Text color={theme.primaryColor} bold>Add AI Model</Text>
 
-      <Box flexDirection="column" marginY={1}>
+      <Box flexDirection="column" marginY={0.5}>
         <Box flexDirection="row" marginY={0.2}>
-          <Text color={activeField === 0 ? 'cyan' : 'white'} bold={activeField === 0}>{"Model ID:       ".padEnd(16)}</Text>
+          <Text color={activeField === 0 ? 'cyan' : 'white'} bold={activeField === 0}>{"ID:     ".padEnd(9)}</Text>
           <TextInput value={modelId} onChange={setModelId} active={activeField === 0} placeholder="e.g. gpt-4o" />
         </Box>
         <Box flexDirection="row" marginY={0.2}>
-          <Text color={activeField === 1 ? 'cyan' : 'white'} bold={activeField === 1}>{"Display Name:   ".padEnd(16)}</Text>
+          <Text color={activeField === 1 ? 'cyan' : 'white'} bold={activeField === 1}>{"Name:   ".padEnd(9)}</Text>
           <TextInput value={displayName} onChange={setDisplayName} active={activeField === 1} placeholder="e.g. GPT-4o" />
         </Box>
-        <Box flexDirection="row" marginY={0.5}>
-          <Text color={activeField === 2 ? 'cyan' : 'white'} bold={activeField === 2}>{"Provider:       ".padEnd(16)}</Text>
+        <Box flexDirection="row" marginY={0.2}>
+          <Text color={activeField === 2 ? 'cyan' : 'white'} bold={activeField === 2}>{"Prov:   ".padEnd(9)}</Text>
           <Text color={activeField === 2 ? 'black' : 'white'} backgroundColor={activeField === 2 ? theme.primaryColor : undefined}>
             {"< "} {providerDisplay} {" >"}
           </Text>
         </Box>
         <Box flexDirection="row" marginY={0.2}>
-          <Text color={activeField === 3 ? 'cyan' : 'white'} bold={activeField === 3}>{"Description:    ".padEnd(16)}</Text>
+          <Text color={activeField === 3 ? 'cyan' : 'white'} bold={activeField === 3}>{"Desc:   ".padEnd(9)}</Text>
           <TextInput value={description} onChange={setDescription} active={activeField === 3} placeholder="e.g. Standard OpenAI model" />
         </Box>
-        <Box flexDirection="row" marginY={0.5}>
-          <Text color={activeField === 4 ? 'cyan' : 'white'} bold={activeField === 4}>{"Category:       ".padEnd(16)}</Text>
+        <Box flexDirection="row" marginY={0.2}>
+          <Text color={activeField === 4 ? 'cyan' : 'white'} bold={activeField === 4}>{"Cat:    ".padEnd(9)}</Text>
           <Text color={activeField === 4 ? 'black' : 'white'} backgroundColor={activeField === 4 ? theme.primaryColor : undefined}>
             {"< "} {category.toUpperCase()} {" >"}
           </Text>
         </Box>
         <Box flexDirection="row" marginY={0.2}>
-          <Text color={activeField === 5 ? 'cyan' : 'white'} bold={activeField === 5}>{"Context Limit:  ".padEnd(16)}</Text>
+          <Text color={activeField === 5 ? 'cyan' : 'white'} bold={activeField === 5}>{"CtxLim: ".padEnd(9)}</Text>
           <TextInput value={contextWindow} onChange={setContextWindow} active={activeField === 5} placeholder="128000" />
         </Box>
         <Box flexDirection="row" marginY={0.2}>
-          <Text color={activeField === 6 ? 'cyan' : 'white'} bold={activeField === 6}>{"Max Output:     ".padEnd(16)}</Text>
+          <Text color={activeField === 6 ? 'cyan' : 'white'} bold={activeField === 6}>{"MaxOut: ".padEnd(9)}</Text>
           <TextInput value={maxOutput} onChange={setMaxOutput} active={activeField === 6} placeholder="4096" />
         </Box>
       </Box>
@@ -386,7 +388,7 @@ export const AddModelDialog: React.FC<AddModelDialogProps> = ({ providers, onSub
         </Box>
       )}
 
-      <Box flexDirection="row" justifyContent="space-between" marginY={1}>
+      <Box flexDirection="row" justifyContent="space-between" marginY={0.5}>
         <Text color={activeField === 7 ? 'black' : theme.primaryColor} bold={activeField === 7} backgroundColor={activeField === 7 ? theme.primaryColor : undefined}>
           {" [ Save Model ] "}
         </Text>
@@ -437,28 +439,35 @@ export const ModelSwitcherDialog: React.FC<ModelSwitcherDialogProps> = ({ models
     );
   }
 
+  const VP = 5;
+  const viewStart = Math.max(0, Math.min(selectedIndex - Math.floor(VP / 2), models.length - VP));
+  const visibleModels = models.slice(viewStart, viewStart + VP);
+
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={70}>
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={60}>
       <Text color={theme.primaryColor} bold>Select AI Model</Text>
       
-      <Box flexDirection="column" marginY={1}>
-        {models.map((model, idx) => {
-          const isSelected = idx === selectedIndex;
+      <Box flexDirection="column" marginY={0.5} borderStyle="single" borderColor="gray" paddingX={1}>
+        {visibleModels.map((model, idx) => {
+          const realIdx = viewStart + idx;
+          const isSelected = realIdx === selectedIndex;
           const bg = isSelected ? theme.primaryColor : undefined;
           
           return (
             <Box key={model.id} paddingX={1} justifyContent="space-between">
               <Text color={isSelected ? 'black' : 'white'} bold={isSelected} backgroundColor={bg}>
-                ● {model.display_name} <Text color={isSelected ? 'black' : '#8e9aa8'}>({model.model_id})</Text>
+                ● {model.display_name} <Text color={isSelected ? 'black' : '#8e9aa8'} backgroundColor={bg}>({model.model_id.slice(0, 15)})</Text>
               </Text>
               <Text color={isSelected ? 'black' : theme.accentColor} backgroundColor={bg}>
-                {model.provider_name}
+                {model.provider_name.slice(0, 15)}
               </Text>
             </Box>
           );
         })}
       </Box>
-      <Text color="gray" italic>Arrows: Navigate • ENTER: Select • ESC: Cancel</Text>
+      <Box justifyContent="center">
+        <Text color="gray" italic>Arrows: Navigate • ENTER: Select • ESC: Cancel</Text>
+      </Box>
     </Box>
   );
 };
@@ -640,12 +649,17 @@ export const AgentSwitcherDialog: React.FC<AgentSwitcherDialogProps> = ({ agents
     );
   }
 
+  const VP = 4;
+  const viewStart = Math.max(0, Math.min(selectedIndex - Math.floor(VP / 2), agents.length - VP));
+  const visibleAgents = agents.slice(viewStart, viewStart + VP);
+
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={65}>
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={60}>
       <Text color={theme.primaryColor} bold>Select Active Agent Preset</Text>
-      <Box flexDirection="column" marginY={1}>
-        {agents.map((agent, idx) => {
-          const isSelected = idx === selectedIndex;
+      <Box flexDirection="column" marginY={0.5} borderStyle="single" borderColor="gray" paddingX={1}>
+        {visibleAgents.map((agent, idx) => {
+          const realIdx = viewStart + idx;
+          const isSelected = realIdx === selectedIndex;
           const isActive = String(agent.id) === String(activeAgentId);
           const bg = isSelected ? theme.primaryColor : undefined;
           
@@ -655,13 +669,15 @@ export const AgentSwitcherDialog: React.FC<AgentSwitcherDialogProps> = ({ agents
                 {isActive ? '● ' : '  '} {agent.name}
               </Text>
               <Text color={isSelected ? 'black' : 'gray'} backgroundColor={bg}>
-                {agent.description?.slice(0, 35) || 'No description'}
+                {agent.description?.slice(0, 25) || 'No description'}
               </Text>
             </Box>
           );
         })}
       </Box>
-      <Text color="gray" italic>Arrows: Navigate • ENTER: Select • ESC: Cancel</Text>
+      <Box justifyContent="center">
+        <Text color="gray" italic>Arrows: Navigate • ENTER: Select • ESC: Cancel</Text>
+      </Box>
     </Box>
   );
 };
@@ -710,18 +726,23 @@ export const HistorySwitcherDialog: React.FC<HistorySwitcherDialogProps> = ({ se
     );
   }
 
+  const VP = 5;
+  const viewStart = Math.max(0, Math.min(selectedIndex - Math.floor(VP / 2), sessions.length - VP));
+  const visibleSessions = sessions.slice(viewStart, viewStart + VP);
+
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={70}>
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={60}>
       <Text color={theme.primaryColor} bold>Resume Chat History</Text>
-      <Box flexDirection="column" marginY={1}>
-        {sessions.map((session, idx) => {
-          const isSelected = idx === selectedIndex;
+      <Box flexDirection="column" marginY={0.5} borderStyle="single" borderColor="gray" paddingX={1}>
+        {visibleSessions.map((session, idx) => {
+          const realIdx = viewStart + idx;
+          const isSelected = realIdx === selectedIndex;
           const bg = isSelected ? theme.primaryColor : undefined;
           
           return (
             <Box key={session.id} paddingX={1} justifyContent="space-between">
               <Text color={isSelected ? 'black' : 'white'} bold={isSelected} backgroundColor={bg}>
-                {"\u{F0B79} "}{session.title || `Session #${session.id}`}
+                {"\u{F0B79} "}{(session.title || `Session #${session.id}`).slice(0, 22)}
               </Text>
               <Text color={isSelected ? 'black' : 'gray'} backgroundColor={bg}>
                 {new Date(session.updated_at).toLocaleString().slice(0, 16)}
@@ -730,7 +751,9 @@ export const HistorySwitcherDialog: React.FC<HistorySwitcherDialogProps> = ({ se
           );
         })}
       </Box>
-      <Text color="gray" italic>Arrows: Navigate • ENTER: Resume • ESC: Cancel</Text>
+      <Box justifyContent="center">
+        <Text color="gray" italic>Arrows: Navigate • ENTER: Resume • ESC: Cancel</Text>
+      </Box>
     </Box>
   );
 };
@@ -772,38 +795,49 @@ export const SkillsListDialog: React.FC<SkillsListDialogProps> = ({ skills, onCl
     );
   }
 
+  const VP = 4;
+  const viewStart = Math.max(0, Math.min(selectedIndex - Math.floor(VP / 2), skills.length - VP));
+  const visibleSkills = skills.slice(viewStart, viewStart + VP);
   const selectedSkill = skills[selectedIndex];
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={75}>
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={60}>
       <Text color={theme.primaryColor} bold>Active Workspace Developer Skills ({skills.length})</Text>
       
-      <Box flexDirection="row" marginY={1} height={12}>
-        {/* Left Side: Skills list */}
-        <Box flexDirection="column" width="30%" borderStyle="single" borderColor="gray" paddingX={1}>
-          {skills.map((skill, idx) => {
-            const isSelected = idx === selectedIndex;
-            return (
-              <Text key={skill.id} color={isSelected ? 'black' : 'white'} backgroundColor={isSelected ? theme.primaryColor : undefined} bold={isSelected}>
-                {"\u{F03D6} "}{skill.name}
-              </Text>
-            );
-          })}
-        </Box>
-        
-        {/* Right Side: Preview instructions */}
-        <Box flexDirection="column" width="70%" borderStyle="single" borderColor="gray" paddingX={1}>
+      {/* Vertical list of skills with viewport */}
+      <Box flexDirection="column" borderStyle="single" borderColor="gray" paddingX={1} marginY={0.5}>
+        {visibleSkills.map((skill, idx) => {
+          const realIdx = viewStart + idx;
+          const isSelected = realIdx === selectedIndex;
+          return (
+            <Text key={skill.id} color={isSelected ? 'black' : 'white'} backgroundColor={isSelected ? theme.primaryColor : undefined} bold={isSelected}>
+              {isSelected ? '›' : ' '} {"\u{F03D6} "}{skill.name}
+            </Text>
+          );
+        })}
+        {skills.length > VP && (
+          <Box justifyContent="center" marginTop={0.2}>
+            <Text color="#8e9aa8">{`-- [${selectedIndex + 1}/${skills.length}] --`}</Text>
+          </Box>
+        )}
+      </Box>
+      
+      {/* Stacked Details below */}
+      {selectedSkill && (
+        <Box flexDirection="column" borderStyle="single" borderColor="gray" paddingX={1} marginY={0.3}>
           <Text color="cyan" bold>Instructions Preview:</Text>
-          <Box marginY={0.5}>
-            <Text color="gray">
-              {selectedSkill?.instructions?.slice(0, 300) || 'No instructions text'}
-              {(selectedSkill?.instructions?.length > 300) ? '...' : ''}
+          <Box marginY={0.2}>
+            <Text color="gray" wrap="wrap">
+              {selectedSkill.instructions?.slice(0, 150) || 'No instructions text'}
+              {(selectedSkill.instructions?.length > 150) ? '...' : ''}
             </Text>
           </Box>
         </Box>
-      </Box>
+      )}
       
-      <Text color="gray" italic>Arrows: Scroll • ENTER/ESC: Close</Text>
+      <Box justifyContent="center">
+        <Text color="gray" italic>Arrows: Scroll • ENTER/ESC: Close</Text>
+      </Box>
     </Box>
   );
 };
@@ -816,10 +850,19 @@ interface McpListDialogProps {
 
 export const McpListDialog: React.FC<McpListDialogProps> = ({ servers, onClose }) => {
   const theme = themeManager.getCurrentTheme();
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   useInput((input: string, key: any) => {
     if (key.escape || key.return) {
       onClose();
+      return;
+    }
+    if (key.upArrow) {
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : servers.length - 1));
+      return;
+    }
+    if (key.downArrow) {
+      setSelectedIndex(prev => (prev < servers.length - 1 ? prev + 1 : 0));
       return;
     }
   });
@@ -836,26 +879,36 @@ export const McpListDialog: React.FC<McpListDialogProps> = ({ servers, onClose }
     );
   }
 
+  const VP = 4;
+  const viewStart = Math.max(0, Math.min(selectedIndex - Math.floor(VP / 2), servers.length - VP));
+  const visibleServers = servers.slice(viewStart, viewStart + VP);
+
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={72}>
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={60}>
       <Text color={theme.primaryColor} bold>Configured MCP Servers ({servers.length})</Text>
-      <Box flexDirection="column" marginY={1}>
-        {servers.map((server) => {
+      <Box flexDirection="column" marginY={0.5} borderStyle="single" borderColor="gray" paddingX={1}>
+        {visibleServers.map((server, idx) => {
+          const realIdx = viewStart + idx;
+          const isSelected = realIdx === selectedIndex;
           const statusColor = server.enabled === 1 ? 'green' : 'red';
           const statusText = server.enabled === 1 ? 'Connected' : 'Disabled';
           
           return (
             <Box key={server.id} paddingX={1} justifyContent="space-between">
               <Box flexDirection="row">
-                <Text color="white" bold>{"\u{F0C71} "}{server.name} </Text>
-                <Text color="gray">({server.command})</Text>
+                <Text color={isSelected ? 'black' : 'white'} bold={isSelected} backgroundColor={isSelected ? theme.primaryColor : undefined}>
+                  {isSelected ? '› ' : '  '}{"\u{F0C71} "}{server.name}{' '}
+                </Text>
+                <Text color={isSelected ? 'black' : 'gray'} backgroundColor={isSelected ? theme.primaryColor : undefined}>({server.command})</Text>
               </Box>
-              <Text color={statusColor} bold>[ {statusText} ]</Text>
+              <Text color={isSelected ? 'black' : statusColor} bold backgroundColor={isSelected ? theme.primaryColor : undefined}>[ {statusText} ]</Text>
             </Box>
           );
         })}
       </Box>
-      <Text color="gray" italic>Press ENTER or ESC to Close</Text>
+      <Box justifyContent="center">
+        <Text color="gray" italic>Arrows: Scroll • ENTER/ESC: Close</Text>
+      </Box>
     </Box>
   );
 };
@@ -1071,11 +1124,11 @@ export const ToolPermissionsDialog: React.FC<ToolPermissionsDialogProps> = ({ on
   };
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={72}>
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={60}>
       <Text color={theme.primaryColor} bold>Tool Permissions Manager ({schemas.length} tools)</Text>
       {/* Sliding viewport — fixed item count, only color/text changes on nav (no layout shifts = no flicker) */}
       {(() => {
-        const VP = 16;
+        const VP = 6;
         const viewStart = Math.max(0, Math.min(selectedIndex - Math.floor(VP / 2), schemas.length - VP));
         const visibleSchemas = schemas.slice(viewStart, viewStart + VP);
         const showScrollUp = viewStart > 0;
@@ -1095,7 +1148,7 @@ export const ToolPermissionsDialog: React.FC<ToolPermissionsDialogProps> = ({ on
                     backgroundColor={isSelected ? theme.primaryColor : undefined}
                     bold={isSelected}
                   >
-                    {isSelected ? '›' : ' '} {CATEGORY_ICONS[cat] || '•'} {schema.function.name.padEnd(27)}
+                    {isSelected ? '›' : ' '} {CATEGORY_ICONS[cat] || '•'} {schema.function.name}
                   </Text>
                   <Text
                     color={isSelected ? 'black' : permColor[perm] || 'yellow'}
@@ -1111,11 +1164,11 @@ export const ToolPermissionsDialog: React.FC<ToolPermissionsDialogProps> = ({ on
           </Box>
         );
       })()}
-      <Box flexDirection="row" marginTop={0.5}>
-        <Text color="green"> ✔ Always Allow </Text>
-        <Text color="cyan"> ~ Allow Once </Text>
-        <Text color="yellow"> ? Ask </Text>
-        <Text color="red"> ✖ Deny </Text>
+      <Box flexDirection="row" marginTop={0.5} justifyContent="space-between">
+        <Text color="green">✔ Allow</Text>
+        <Text color="cyan">~ Once</Text>
+        <Text color="yellow">? Ask</Text>
+        <Text color="red">✖ Deny</Text>
       </Box>
       <Text color="gray" italic>↑↓: Navigate  ←→: Change Permission  ENTER/ESC: Close</Text>
     </Box>
@@ -1151,13 +1204,13 @@ export const QuestionDialog: React.FC<QuestionDialogProps> = ({ question, option
   });
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={72}>
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={60}>
       <Text color={theme.accentColor} bold>{"\u{F042C} "}Interactive Question</Text>
       <Box marginY={0.5} paddingX={1}>
         <Text color="white" bold>{question}</Text>
       </Box>
       
-      <Box flexDirection="column" marginY={1}>
+      <Box flexDirection="column" marginY={0.5} borderStyle="single" borderColor="gray" paddingX={1}>
         {options.map((option, idx) => {
           const isSelected = idx === selectedIndex;
           const bg = isSelected ? theme.primaryColor : undefined;
@@ -1171,7 +1224,9 @@ export const QuestionDialog: React.FC<QuestionDialogProps> = ({ question, option
           );
         })}
       </Box>
-      <Text color="gray" italic>↑↓ Arrows: Navigate • ENTER: Select Option</Text>
+      <Box justifyContent="center">
+        <Text color="gray" italic>↑↓ Arrows: Navigate • ENTER: Select Option</Text>
+      </Box>
     </Box>
   );
 };
@@ -1219,14 +1274,14 @@ export const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({ initia
   });
 
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={70}>
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={60}>
       <Text color={theme.primaryColor} bold>Backup & Restore Credentials</Text>
       
-      <Box flexDirection="column" marginY={1}>
+      <Box flexDirection="column" marginY={0.5}>
         {/* Row 1: Action Type */}
         <Box flexDirection="row" marginY={0.2}>
           <Text color={activeField === 0 ? 'cyan' : 'white'} bold={activeField === 0}>
-            {"Action:         ".padEnd(16)}
+            {"Action: "}
           </Text>
           <Box flexDirection="row">
             <Text 
@@ -1250,7 +1305,7 @@ export const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({ initia
         {/* Row 2: File Path */}
         <Box flexDirection="row" marginY={0.2}>
           <Text color={activeField === 1 ? 'cyan' : 'white'} bold={activeField === 1}>
-            {"File Path:      ".padEnd(16)}
+            {"Path:   "}
           </Text>
           <TextInput 
             value={filePath} 
@@ -1261,8 +1316,8 @@ export const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({ initia
         </Box>
       </Box>
 
-      <Box flexDirection="row" justifyContent="space-between" marginY={1}>
-        <Box flexDirection="row">
+      <Box flexDirection="column" marginY={0.5}>
+        <Box flexDirection="row" justifyContent="space-between" marginY={0.2}>
           <Text 
             color={activeField === 2 ? 'black' : theme.primaryColor} 
             bold={activeField === 2} 
@@ -1270,8 +1325,11 @@ export const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({ initia
           >
             {mode === 'backup' ? " [ Start Backup ] " : " [ Start Restore ] "}
           </Text>
+          <Text color="gray">ESC: Cancel</Text>
         </Box>
-        <Text color="gray">Arrows: Navigate/Change • ENTER: Select/Execute • ESC: Cancel</Text>
+        <Box justifyContent="center" marginTop={0.5}>
+          <Text color="gray" italic>Arrows: Navigate • ENTER: Execute</Text>
+        </Box>
       </Box>
     </Box>
   );

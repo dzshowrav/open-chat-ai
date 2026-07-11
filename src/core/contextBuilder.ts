@@ -40,6 +40,7 @@ To make your responses highly readable, clean, and beautifully stylized in the t
 - Tables (Dynamic Layouts):
   • Use markdown tables to compare data, list configuration properties, show status flags, or summarize file structures.
   • Ensure column alignment syntax is specified correctly (e.g., |:---|:---:|---:|).
+  • CRITICAL: Write each row of a table on a single continuous line. NEVER put line breaks (newlines) or wrap cell text inside a table row. Every row must start with '|' and end with '|' on one line. Do not wrap cell content to a new line.
 - Blockquotes & Callouts:
   • Use '>' for callouts, tips, cautions, or important notes (e.g., '> **Warning:** Make sure to backup before proceeding.').
 - Code Blocks & File Diffs:

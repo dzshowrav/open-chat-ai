@@ -562,7 +562,49 @@ function processMarkdown(text: string, id: string, partial: boolean): ProcessRes
     .replace(/\0/g, '')                                  // Strip null bytes
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ''); // Strip control chars
 
-  const lines = cleanText.split('\n');
+  const rawLines = cleanText.split('\n');
+  const lines: string[] = [];
+
+  // Preprocess: merge wrapped table lines (handles cases where AI wrapped cells without pipes)
+  for (let k = 0; k < rawLines.length; k++) {
+    let current = rawLines[k];
+    const trimmed = current.trim();
+
+    if (trimmed.startsWith('|') && !trimmed.endsWith('|')) {
+      let mergeIndex = k + 1;
+      let toMerge = '';
+      let foundEnd = false;
+
+      while (mergeIndex < rawLines.length) {
+        const nextLine = rawLines[mergeIndex];
+        const nextTrimmed = nextLine.trim();
+
+        if (nextTrimmed.startsWith('|')) {
+          break;
+        }
+        if (nextTrimmed === '') {
+          break;
+        }
+
+        toMerge += ' ' + nextTrimmed;
+
+        if (nextTrimmed.endsWith('|')) {
+          foundEnd = true;
+          break;
+        }
+
+        mergeIndex++;
+      }
+
+      if (foundEnd) {
+        current = current + toMerge;
+        k = mergeIndex; // Skip merged lines
+      }
+    }
+
+    lines.push(current);
+  }
+
   const output: string[] = [];
 
   let inCodeBlock = false;

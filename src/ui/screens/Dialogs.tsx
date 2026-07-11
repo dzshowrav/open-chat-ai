@@ -948,106 +948,78 @@ export const ToolsListDialog: React.FC<ToolsListDialogProps> = ({ onClose }) => 
     always_allow: 'green', allow_once: 'cyan', ask: 'yellow', deny: 'red'
   };
 
+  const currentCat = categories[catIndex];
+  const catLabel = currentCat === 'all' ? 'All' : CATEGORY_LABELS[currentCat] || currentCat;
+  const catCount = currentCat === 'all'
+    ? allSchemas.length
+    : allSchemas.filter(s => TOOL_CATEGORIES[s.function.name] === currentCat).length;
+
+  const VP = 5;
+  const viewStart = Math.max(0, Math.min(selectedIndex - Math.floor(VP / 2), filteredSchemas.length - VP));
+  const visibleTools = filteredSchemas.slice(viewStart, viewStart + VP);
+
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={80}>
+    <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} paddingX={1} width={60}>
       <Box flexDirection="row" justifyContent="space-between">
-        <Text color={theme.primaryColor} bold>Native Tool Registry ({allSchemas.length} tools)</Text>
-        <Text color="gray">← → Change Category</Text>
+        <Text color={theme.primaryColor} bold>Registry ({allSchemas.length} tools)</Text>
+        <Text color="gray">ESC/ENTER: Close</Text>
       </Box>
 
-      {/* Category filter tabs */}
-      <Box flexDirection="row" marginY={0.5} flexWrap="wrap">
-        {categories.map((cat, idx) => {
-          const isActive = idx === catIndex;
-          const icon = cat === 'all' ? '\u{F002}' : CATEGORY_ICONS[cat] || '•';
-          const label = cat === 'all' ? 'All' : CATEGORY_LABELS[cat] || cat;
-          const count = cat === 'all'
-            ? allSchemas.length
-            : allSchemas.filter(s => TOOL_CATEGORIES[s.function.name] === cat).length;
-          return (
-            <Box key={cat} marginRight={1}>
-              <Text
-                color={isActive ? 'black' : 'gray'}
-                backgroundColor={isActive ? theme.primaryColor : undefined}
-                bold={isActive}
-              >
-                {` ${icon} ${label}(${count}) `}
-              </Text>
-            </Box>
-          );
-        })}
+      {/* Compact single-line category selector */}
+      <Box flexDirection="row" marginY={0.3} justifyContent="center">
+        <Text color="gray">Category: </Text>
+        <Text color={theme.accentColor} bold>{`◄  ${catLabel} (${catCount})  ►`}</Text>
       </Box>
 
-      <Box flexDirection="row" marginY={0.5} height={14}>
-        {/* Left: tool list — sliding viewport, fixed item count to prevent flicker */}
-        {(() => {
-          const VP = 12;
-          const viewStart = Math.max(0, Math.min(selectedIndex - Math.floor(VP / 2), filteredSchemas.length - VP));
-          const visibleTools = filteredSchemas.slice(viewStart, viewStart + VP);
-          const showScrollUp = viewStart > 0;
-          const showScrollDown = viewStart + VP < filteredSchemas.length;
-          return (
-            <Box flexDirection="column" width="40%" borderStyle="single" borderColor="gray" paddingX={1}>
-              {showScrollUp && <Text color="gray" dimColor>  ↑ {viewStart} more above</Text>}
-              {visibleTools.map((schema, vidx) => {
-                const realIdx = viewStart + vidx;
-                const isSelected = realIdx === selectedIndex;
-                const cat = TOOL_CATEGORIES[schema.function.name] || 'other';
-                const perm = permRepo.getPermission(schema.function.name) || 'ask';
-                return (
-                  <Box key={schema.function.name} flexDirection="row" justifyContent="space-between">
-                    <Text
-                      color={isSelected ? 'black' : 'white'}
-                      backgroundColor={isSelected ? theme.primaryColor : undefined}
-                      bold={isSelected}
-                    >
-                      {isSelected ? '›' : ' '} {CATEGORY_ICONS[cat] || '•'} {schema.function.name}
-                    </Text>
-                    <Text color={isSelected ? 'black' : permColor[perm] || 'gray'} backgroundColor={isSelected ? theme.primaryColor : undefined}>
-                      {perm === 'always_allow' ? '✔' : perm === 'deny' ? '✖' : perm === 'ask' ? '?' : '~'}
-                    </Text>
-                  </Box>
-                );
-              })}
-              {showScrollDown && <Text color="gray" dimColor>  ↓ {filteredSchemas.length - viewStart - VP} more below</Text>}
-            </Box>
-          );
-        })()}
-
-        {/* Right: selected tool detail */}
-        <Box flexDirection="column" width="60%" paddingX={1}>
-          {selectedTool ? (
-            <>
-              <Text color={theme.accentColor} bold>{selectedTool.function.name}</Text>
-              <Box marginY={0.3}>
-                <Text color="gray" wrap="wrap">
-                  {(selectedTool.function.description as string).slice(0, 200)}
+      <Box flexDirection="column" marginY={0.3}>
+        {/* Tool list */}
+        <Box flexDirection="column" borderStyle="single" borderColor="gray" paddingX={1}>
+          {visibleTools.map((schema, vidx) => {
+            const realIdx = viewStart + vidx;
+            const isSelected = realIdx === selectedIndex;
+            const cat = TOOL_CATEGORIES[schema.function.name] || 'other';
+            const perm = permRepo.getPermission(schema.function.name) || 'ask';
+            return (
+              <Box key={schema.function.name} flexDirection="row" justifyContent="space-between">
+                <Text
+                  color={isSelected ? 'black' : 'white'}
+                  backgroundColor={isSelected ? theme.primaryColor : undefined}
+                  bold={isSelected}
+                >
+                  {isSelected ? '›' : ' '} {CATEGORY_ICONS[cat] || '•'} {schema.function.name}
+                </Text>
+                <Text color={isSelected ? 'black' : permColor[perm] || 'gray'} backgroundColor={isSelected ? theme.primaryColor : undefined}>
+                  {perm === 'always_allow' ? '✔' : perm === 'deny' ? '✖' : perm === 'ask' ? '?' : '~'}
                 </Text>
               </Box>
-              <Box flexDirection="row" marginY={0.2}>
-                <Text color="white">Category: </Text>
-                <Text color="cyan">{CATEGORY_LABELS[TOOL_CATEGORIES[selectedTool.function.name]] || 'Other'}</Text>
-              </Box>
-              <Box flexDirection="row" marginY={0.2}>
-                <Text color="white">Permission: </Text>
-                <Text color={permColor[selectedPerm] || 'yellow'}>{selectedPerm}</Text>
-              </Box>
-              <Box flexDirection="column" marginY={0.3}>
-                <Text color="gray" bold>Parameters:</Text>
-                {Object.entries(selectedTool.function.parameters?.properties || {}).slice(0, 5).map(([key, val]: [string, any]) => (
-                  <Text key={key} color="gray" dimColor>
-                    {`  ${key}${(selectedTool.function.parameters?.required || []).includes(key) ? '*' : ''}: ${val.type} — ${(val.description || '').slice(0, 50)}`}
-                  </Text>
-                ))}
-              </Box>
-            </>
-          ) : (
-            <Text color="gray">Select a tool to see details</Text>
+            );
+          })}
+          {filteredSchemas.length > VP && (
+            <Box justifyContent="center">
+              <Text color="gray" dimColor>
+                {`-- [${selectedIndex + 1}/${filteredSchemas.length}] --`}
+              </Text>
+            </Box>
           )}
         </Box>
+
+        {/* Selected tool detail stacked vertically */}
+        {selectedTool && (
+          <Box flexDirection="column" marginY={0.3} paddingX={1}>
+            <Box flexDirection="row" justifyContent="space-between">
+              <Text color={theme.accentColor} bold>{selectedTool.function.name}</Text>
+              <Text color={permColor[selectedPerm] || 'yellow'} bold>{`Perm: ${selectedPerm}`}</Text>
+            </Box>
+            <Text color="gray" wrap="wrap">
+              {(selectedTool.function.description as string).slice(0, 120)}...
+            </Text>
+          </Box>
+        )}
       </Box>
 
-      <Text color="gray" italic>↑↓: Navigate  ←→: Filter Category  ENTER/ESC: Close  (* = required param)</Text>
+      <Box justifyContent="center">
+        <Text color="gray" dimColor italic>↑↓: Navigate  ←→: Change Cat</Text>
+      </Box>
     </Box>
   );
 };

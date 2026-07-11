@@ -52,7 +52,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state }) => {
       
       <Box>
         {state.isUpdateAvailable ? (
-          <Text color="#9ece6a" bold>v{APP_VERSION} (Update Available!)</Text>
+          <Text color="#f7768e" bold>{"\u{F01E} "}</Text>
         ) : (
           <Text color="gray">v{APP_VERSION}</Text>
         )}

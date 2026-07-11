@@ -798,6 +798,7 @@ export const App: React.FC = () => {
         {showCommandPalette && (
           <Box justifyContent="center" marginY={1}>
             <CommandPalette 
+              state={state}
               query={prompt.startsWith('/') ? prompt.slice(1) : prompt} 
               onSelect={(cmd) => {
                 setShowCommandPalette(false);

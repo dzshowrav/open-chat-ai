@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput, useStdout } from 'ink';
 import { BUILT_IN_COMMANDS } from '../../core/constants.js';
 import { themeManager } from '../theme/themeManager.js';
+import { AppState } from '../../core/state.js';
 
 interface CommandPaletteProps {
   query: string;
+  state: AppState;
   onSelect: (command: string) => void;
   onClose: () => void;
 }
 
-export const CommandPalette: React.FC<CommandPaletteProps> = ({ query, onSelect, onClose }) => {
+export const CommandPalette: React.FC<CommandPaletteProps> = ({ query, state, onSelect, onClose }) => {
   const theme = themeManager.getCurrentTheme();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const { stdout } = useStdout();
@@ -78,6 +80,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ query, onSelect,
           const globalIdx = startIndex + localIdx;
           const isSelected = globalIdx === selectedIndex;
           const icon = isSelected ? '▶ ' : '  ';
+          const isUpdateCmd = cmd.command === '/update latest';
+          const showUpdateIcon = isUpdateCmd && state.isUpdateAvailable;
 
           return (
             <Box key={cmd.command} flexDirection="column" paddingX={1} paddingY={0}>
@@ -85,7 +89,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ query, onSelect,
                 // Narrow: stack command and usage vertically
                 <Box flexDirection="column">
                   <Text color={theme.primaryColor} inverse={isSelected}>
-                    {icon}{cmd.command}
+                    {icon}{cmd.command}{showUpdateIcon && <Text color="#f7768e" bold>{" \u{F01E}"}</Text>}
                   </Text>
                   <Box paddingLeft={2}>
                     <Text color="gray" inverse={isSelected}>
@@ -98,7 +102,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ query, onSelect,
                 <Box flexDirection="column">
                   <Box flexDirection="row" justifyContent="space-between">
                     <Text color={theme.primaryColor} inverse={isSelected}>
-                      {icon}{cmd.command}
+                      {icon}{cmd.command}{showUpdateIcon && <Text color="#f7768e" bold>{" \u{F01E}"}</Text>}
                     </Text>
                     <Text color="gray" italic inverse={isSelected}>
                       {cmd.usage}

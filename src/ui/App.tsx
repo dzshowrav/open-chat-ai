@@ -649,6 +649,34 @@ export const App: React.FC = () => {
   const handleBackupRestoreSubmit = async (mode: 'backup' | 'restore', filePath: string) => {
     setActiveDialog('none');
     const fs = await import('fs');
+    const path = await import('path');
+    const os = await import('os');
+
+    // Clean and resolve path
+    let cleanedPath = filePath.trim();
+
+    // Remove command prefix like 'cd ' (case-insensitive)
+    if (cleanedPath.toLowerCase().startsWith('cd ')) {
+      cleanedPath = cleanedPath.slice(3).trim();
+    }
+
+    // Strip wrapping quotes
+    if ((cleanedPath.startsWith('"') && cleanedPath.endsWith('"')) || 
+        (cleanedPath.startsWith("'") && cleanedPath.endsWith("'"))) {
+      cleanedPath = cleanedPath.slice(1, -1).trim();
+    }
+
+    // Resolve home directory
+    if (cleanedPath.startsWith('~')) {
+      cleanedPath = path.join(os.homedir(), cleanedPath.slice(1));
+    } else if (!path.isAbsolute(cleanedPath)) {
+      // If it starts with storage/ in Termux environment, default to resolving in home dir
+      if (cleanedPath.startsWith('storage/') || cleanedPath.startsWith('storage\\')) {
+        cleanedPath = path.join(os.homedir(), cleanedPath);
+      } else {
+        cleanedPath = path.resolve(process.cwd(), cleanedPath);
+      }
+    }
     
     if (mode === 'backup') {
       try {
@@ -660,18 +688,25 @@ export const App: React.FC = () => {
           providers,
           models
         };
-        fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
-        stateManager.setState({ errorMsg: `Backup saved successfully to: ${filePath}` });
+        
+        // Ensure parent directory exists
+        const dirName = path.dirname(cleanedPath);
+        if (!fs.existsSync(dirName)) {
+          fs.mkdirSync(dirName, { recursive: true });
+        }
+        
+        fs.writeFileSync(cleanedPath, JSON.stringify(data, null, 2), 'utf-8');
+        stateManager.setState({ errorMsg: `Backup saved successfully to: ${cleanedPath}` });
       } catch (err: any) {
         stateManager.setState({ errorMsg: `Backup failed: ${err.message}` });
       }
     } else {
       try {
-        if (!fs.existsSync(filePath)) {
-          stateManager.setState({ errorMsg: `Restore failed: File not found at ${filePath}` });
+        if (!fs.existsSync(cleanedPath)) {
+          stateManager.setState({ errorMsg: `Restore failed: File not found at ${cleanedPath}` });
           return;
         }
-        const raw = fs.readFileSync(filePath, 'utf-8');
+        const raw = fs.readFileSync(cleanedPath, 'utf-8');
         const data = JSON.parse(raw);
         if (!data || !Array.isArray(data.providers)) {
           stateManager.setState({ errorMsg: 'Restore failed: Invalid backup file format.' });

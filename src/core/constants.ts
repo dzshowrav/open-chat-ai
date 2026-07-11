@@ -92,11 +92,6 @@ export const BUILT_IN_COMMANDS: CommandSpec[] = [
     usage: '/update latest'
   },
   {
-    command: '/uninstall',
-    description: 'Completely uninstall OpenChat AI from this system',
-    usage: '/uninstall'
-  },
-  {
     command: '/provider api',
     description: 'Add a new OpenAI-compatible provider API endpoint',
     usage: '/provider api'
@@ -155,6 +150,11 @@ export const BUILT_IN_COMMANDS: CommandSpec[] = [
     command: '/help',
     description: 'Show manual and documentation instructions',
     usage: '/help'
+  },
+  {
+    command: '/uninstall',
+    description: 'Completely uninstall OpenChat AI from this system',
+    usage: '/uninstall'
   },
   {
     command: '/exit',

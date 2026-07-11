@@ -5,6 +5,7 @@ import { AppEngine } from '../core/engine.js';
 import { eventBus } from '../core/events.js';
 import { themeManager } from './theme/themeManager.js';
 import { StatusBar } from './components/StatusBar.js';
+import { terminateMarkdownWorker } from './components/MarkdownWorker.js';
 import { HomeScreen } from './screens/HomeScreen.js';
 import { ChatScreen } from './screens/ChatScreen.js';
 import { CommandPalette } from './components/CommandPalette.js';
@@ -174,7 +175,10 @@ export const App: React.FC = () => {
         eventBus.emit('stream:finished', { fullText: state.streamingText || '', tokensCount: 0 });
         stateManager.setState({ isStreaming: false, streamingStartTime: null });
       }
-      else exit();
+      else {
+        terminateMarkdownWorker();
+        exit();
+      }
       return;
     }
 
@@ -377,6 +381,7 @@ export const App: React.FC = () => {
     } else if (cmd === '/help') {
       stateManager.setState({ errorMsg: 'Slash commands: /update latest, /uninstall, /provider api, /add model, /all models, /agents, /skills, /history, /mcp, /tools, /permissions, /settings, /help, /exit' });
     } else if (cmd === '/exit') {
+      terminateMarkdownWorker();
       exit();
       setTimeout(() => process.exit(0), 50);
     } else {

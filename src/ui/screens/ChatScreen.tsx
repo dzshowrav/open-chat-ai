@@ -194,7 +194,7 @@ const MessageItem = ({ msg, idx, isActive, allMessages }: { msg: Message, idx: n
             <Box flexDirection="row" marginRight={1}>
               <Text color={theme.accentColor} bold>● </Text>
             </Box>
-            <MarkdownWorker content={msg.content} />
+            <MarkdownWorker content={msg.content} isStreaming={isActive} />
           </Box>
         ) : (
           !msg.reasoning_content && (

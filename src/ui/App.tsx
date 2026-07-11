@@ -38,6 +38,28 @@ import { ApiEngine } from '../api/apiEngine.js';
 import { ContextBuilder } from '../core/contextBuilder.js';
 import { ToolManager } from '../tools/toolManager.js';
 
+const renderPromptPreview = (text: string) => {
+  if (!text) return null;
+
+  const lines = text.split('\n');
+  const isMultiLine = lines.length > 1;
+  const isVeryLong = text.length > 150;
+
+  if (isMultiLine || isVeryLong) {
+    const linesCount = lines.length;
+    const charCount = text.length;
+    const firstLine = lines[0].trim();
+    const previewText = firstLine.length > 30 ? firstLine.slice(0, 30) + '...' : firstLine;
+    return (
+      <Text color="cyan" bold>
+        [pasted text: <Text color="white" italic>"{previewText}"</Text> | +{linesCount - 1} lines, {charCount} chars]
+      </Text>
+    );
+  }
+
+  return <Text>{text}</Text>;
+};
+
 export const App: React.FC = () => {
   const { exit } = useApp();
   const theme = themeManager.getCurrentTheme();
@@ -182,6 +204,11 @@ export const App: React.FC = () => {
         terminateMarkdownWorker();
         exit();
       }
+      return;
+    }
+
+    if (key.ctrl && input === 'u') {
+      setPrompt('');
       return;
     }
 
@@ -1029,7 +1056,7 @@ export const App: React.FC = () => {
       <Box flexDirection="column">
         <Box flexDirection="row" borderStyle="single" borderColor={theme.accentColor} paddingX={1} marginY={0.5}>
           <Text color={theme.accentColor} bold>&gt; </Text>
-          <Text>{prompt}</Text>
+          {renderPromptPreview(prompt)}
           <Text color="cyan">█</Text>
         </Box>
         <StatusBar state={state} />

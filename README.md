@@ -43,6 +43,9 @@ Install globally using `npm` directly from the local repository directory or via
 git clone https://github.com/dzshowrav/open-chat-ai.git
 cd open-chat-ai
 
+# Install dependencies
+npm install
+
 # Build and link globally
 npm run build
 npm link

@@ -49,7 +49,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ query, state, on
     return (
       <Box flexDirection="column" borderStyle="round" borderColor="red" paddingX={1} paddingY={0} width={paletteWidth}>
         <Text color="red" bold>No commands found for "{query}"</Text>
-        <Text color="gray" dimColor>Press ESC to close</Text>
+        <Text color="#8e9aa8">Press ESC to close</Text>
       </Box>
     );
   }
@@ -70,7 +70,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ query, state, on
         <Text color={theme.accentColor} bold>⌘ Commands</Text>
         <Box flexDirection="row">
           {startIndex > 0 && <Text color="cyan">↑ </Text>}
-          {query && <Text color="gray" dimColor>filter: {query}</Text>}
+          {query && <Text color="#8e9aa8">filter: {query}</Text>}
         </Box>
       </Box>
 
@@ -122,7 +122,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ query, state, on
 
       {/* Footer hint */}
       <Box marginTop={1} flexDirection="row" justifyContent="space-between">
-        <Text color="gray" dimColor>↑↓ nav  ENTER sel  ESC cls</Text>
+        <Text color="#8e9aa8">↑↓ nav  ENTER sel  ESC cls</Text>
         {startIndex + maxItems < filtered.length && <Text color="cyan">↓</Text>}
       </Box>
     </Box>

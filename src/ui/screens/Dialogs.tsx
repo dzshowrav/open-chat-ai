@@ -95,7 +95,7 @@ export const ProviderListDialog: React.FC<ProviderListDialogProps> = ({ provider
               <Text color={isSelected ? 'black' : 'white'} bold={isSelected} backgroundColor={bg}>
                 ● {provider.name}
               </Text>
-              <Text color={isSelected ? 'black' : 'gray'} dimColor backgroundColor={bg}>
+              <Text color={isSelected ? 'black' : '#8e9aa8'} backgroundColor={bg}>
                 {provider.base_url}
               </Text>
             </Box>
@@ -449,7 +449,7 @@ export const ModelSwitcherDialog: React.FC<ModelSwitcherDialogProps> = ({ models
           return (
             <Box key={model.id} paddingX={1} justifyContent="space-between">
               <Text color={isSelected ? 'black' : 'white'} bold={isSelected} backgroundColor={bg}>
-                ● {model.display_name} <Text color={isSelected ? 'black' : 'gray'} dimColor>({model.model_id})</Text>
+                ● {model.display_name} <Text color={isSelected ? 'black' : '#8e9aa8'}>({model.model_id})</Text>
               </Text>
               <Text color={isSelected ? 'black' : theme.accentColor} backgroundColor={bg}>
                 {model.provider_name}
@@ -572,7 +572,7 @@ export const PermissionsPromptDialog: React.FC<PermissionsPromptDialogProps> = (
       
       <Box flexDirection="column" marginY={0}>
         <Text color="cyan" bold>Tool: {toolName}</Text>
-        <Text color="gray" dimColor>
+        <Text color="#8e9aa8">
           Args: {JSON.stringify(args).length > 80 ? JSON.stringify(args).substring(0, 80) + '...' : JSON.stringify(args)}
         </Text>
       </Box>
@@ -996,7 +996,7 @@ export const ToolsListDialog: React.FC<ToolsListDialogProps> = ({ onClose }) => 
           })}
           {filteredSchemas.length > VP && (
             <Box justifyContent="center">
-              <Text color="gray" dimColor>
+              <Text color="#8e9aa8">
                 {`-- [${selectedIndex + 1}/${filteredSchemas.length}] --`}
               </Text>
             </Box>
@@ -1018,7 +1018,7 @@ export const ToolsListDialog: React.FC<ToolsListDialogProps> = ({ onClose }) => 
       </Box>
 
       <Box justifyContent="center">
-        <Text color="gray" dimColor italic>↑↓: Navigate  ←→: Change Cat</Text>
+        <Text color="gray" italic>↑↓: Navigate  ←→: Change Cat</Text>
       </Box>
     </Box>
   );
@@ -1082,7 +1082,7 @@ export const ToolPermissionsDialog: React.FC<ToolPermissionsDialogProps> = ({ on
         const showScrollDown = viewStart + VP < schemas.length;
         return (
           <Box flexDirection="column" marginY={0.5}>
-            {showScrollUp && <Text color="gray" dimColor>  ↑ {viewStart} more above</Text>}
+            {showScrollUp && <Text color="#8e9aa8">  ↑ {viewStart} more above</Text>}
             {visibleSchemas.map((schema, vidx) => {
               const realIdx = viewStart + vidx;
               const isSelected = realIdx === selectedIndex;
@@ -1107,7 +1107,7 @@ export const ToolPermissionsDialog: React.FC<ToolPermissionsDialogProps> = ({ on
                 </Box>
               );
             })}
-            {showScrollDown && <Text color="gray" dimColor>  ↓ {schemas.length - viewStart - VP} more below</Text>}
+            {showScrollDown && <Text color="#8e9aa8">  ↓ {schemas.length - viewStart - VP} more below</Text>}
           </Box>
         );
       })()}
@@ -1272,6 +1272,102 @@ export const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({ initia
           </Text>
         </Box>
         <Text color="gray">Arrows: Navigate/Change • ENTER: Select/Execute • ESC: Cancel</Text>
+      </Box>
+    </Box>
+  );
+};
+
+// --- Theme Switcher Dialog ---
+interface ThemeSwitcherDialogProps {
+  onSelect: (themeId: string) => void;
+  onClose: () => void;
+}
+
+export const ThemeSwitcherDialog: React.FC<ThemeSwitcherDialogProps> = ({ onSelect, onClose }) => {
+  const currentTheme = themeManager.getCurrentTheme();
+  const themeIds = Object.keys(BUILT_IN_THEMES);
+  const [selectedIndex, setSelectedIndex] = useState(themeIds.indexOf(currentTheme.id) !== -1 ? themeIds.indexOf(currentTheme.id) : 0);
+
+  const VP = 8;
+  const viewStart = Math.max(0, Math.min(selectedIndex - Math.floor(VP / 2), themeIds.length - VP));
+  const visibleThemeIds = themeIds.slice(viewStart, viewStart + VP);
+
+  useInput((input: string, key: any) => {
+    if (key.escape) {
+      onClose();
+      return;
+    }
+    if (key.upArrow) {
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : themeIds.length - 1));
+      return;
+    }
+    if (key.downArrow) {
+      setSelectedIndex(prev => (prev < themeIds.length - 1 ? prev + 1 : 0));
+      return;
+    }
+    if (key.return) {
+      onSelect(themeIds[selectedIndex]);
+      return;
+    }
+  });
+
+  const selectedThemeId = themeIds[selectedIndex];
+  const selectedTheme = BUILT_IN_THEMES[selectedThemeId];
+
+  return (
+    <Box flexDirection="column" borderStyle="round" borderColor={currentTheme.primaryColor} paddingX={1} width={60}>
+      <Box flexDirection="row" justifyContent="space-between" marginBottom={0.3}>
+        <Text color={currentTheme.primaryColor} bold>Theme Selector ({themeIds.length} themes)</Text>
+        <Text color="gray">ESC: Close</Text>
+      </Box>
+
+      {/* Theme list viewport */}
+      <Box flexDirection="column" borderStyle="single" borderColor="gray" paddingX={1}>
+        {visibleThemeIds.map((id, vidx) => {
+          const realIdx = viewStart + vidx;
+          const isSelected = realIdx === selectedIndex;
+          const theme = BUILT_IN_THEMES[id];
+          return (
+            <Box key={id} flexDirection="row" justifyContent="space-between">
+              <Text
+                color={isSelected ? 'black' : 'white'}
+                backgroundColor={isSelected ? currentTheme.primaryColor : undefined}
+                bold={isSelected}
+              >
+                {isSelected ? '›' : ' '} {theme.name} {theme.darkMode ? '🌙' : '☀️'}
+              </Text>
+              <Box flexDirection="row">
+                <Text color={theme.primaryColor}>■ </Text>
+                <Text color={theme.accentColor}>■</Text>
+              </Box>
+            </Box>
+          );
+        })}
+        <Box justifyContent="center" marginTop={0.2}>
+          <Text color="gray">
+            {`-- [${selectedIndex + 1}/${themeIds.length}] --`}
+          </Text>
+        </Box>
+      </Box>
+
+      {/* Preview box */}
+      {selectedTheme && (
+        <Box flexDirection="column" marginY={0.3} paddingX={1}>
+          <Box flexDirection="row" justifyContent="space-between">
+            <Text color={currentTheme.accentColor} bold>Preview: {selectedTheme.name}</Text>
+            <Text color="gray" italic>by {selectedTheme.author}</Text>
+          </Box>
+          <Box flexDirection="row" marginY={0.2}>
+            <Text color="white">Primary: </Text>
+            <Text color={selectedTheme.primaryColor} bold>{selectedTheme.primaryColor} ████</Text>
+            <Text color="white">  Accent: </Text>
+            <Text color={selectedTheme.accentColor} bold>{selectedTheme.accentColor} ████</Text>
+          </Box>
+        </Box>
+      )}
+
+      <Box justifyContent="center">
+        <Text color="gray" italic>↑↓: Navigate  ENTER: Apply Theme</Text>
       </Box>
     </Box>
   );

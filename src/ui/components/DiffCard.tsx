@@ -200,7 +200,7 @@ function getFileIcon(filePath: string): string {
 function getLineColor(op: HunkLine['op']): string {
   if (op === 'delete') return '#ff6b6b';
   if (op === 'insert') return '#51cf66';
-  return '#c0caf5';
+  return '#718096';
 }
 
 function getLineBg(op: HunkLine['op']): string {
@@ -319,7 +319,7 @@ export const DiffCard: React.FC<DiffCardProps> = ({
 
         {/* Path display */}
         <Box flexGrow={1} flexDirection="row">
-          <Text color="#6b7280" dimColor>{shortDir}</Text>
+          <Text color="#8e9aa8">{shortDir}</Text>
           <Text color="#f9fafb" bold>{fileName}</Text>
         </Box>
 
@@ -396,14 +396,14 @@ export const DiffCard: React.FC<DiffCardProps> = ({
                     <Box key={`line_${hIdx}_${lIdx}`} flexDirection="row">
                       {/* Old line number gutter */}
                       <Box width={lineNumWidth + 1}>
-                        <Text color={l.op === 'delete' ? '#ff6b6b' : '#4a5568'} dimColor={l.op === 'equal'}>
+                        <Text color={l.op === 'delete' ? '#ff6b6b' : '#4a5568'}>
                           {oldNum}
                         </Text>
                       </Box>
 
                       {/* New line number gutter */}
                       <Box width={lineNumWidth + 2}>
-                        <Text color={l.op === 'insert' ? '#51cf66' : '#4a5568'} dimColor={l.op === 'equal'}>
+                        <Text color={l.op === 'insert' ? '#51cf66' : '#4a5568'}>
                           {newNum}
                         </Text>
                       </Box>
@@ -419,7 +419,6 @@ export const DiffCard: React.FC<DiffCardProps> = ({
                       <Box flexGrow={1}>
                         <Text
                           color={color}
-                          dimColor={l.op === 'equal'}
                           bold={l.op !== 'equal'}
                         >
                           {l.line}
@@ -452,18 +451,18 @@ export const DiffCard: React.FC<DiffCardProps> = ({
 
       {/* ── Footer stat bar ── */}
       <Box flexDirection="row" paddingX={1} paddingY={0}>
-        <Text color="#374151" dimColor>
+        <Text color="#4a5568">
           ─── patch applied
         </Text>
         {addedCount > 0 && (
           <>
-            <Text color="#374151" dimColor>  </Text>
+            <Text color="#4a5568">  </Text>
             <Text color="#065f46">{'█'.repeat(Math.min(addedCount, 20))}</Text>
           </>
         )}
         {removedCount > 0 && (
           <>
-            <Text color="#374151" dimColor>  </Text>
+            <Text color="#4a5568">  </Text>
             <Text color="#7f1d1d">{'█'.repeat(Math.min(removedCount, 20))}</Text>
           </>
         )}

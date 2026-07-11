@@ -23,7 +23,8 @@ import {
   ToolsListDialog,
   ToolPermissionsDialog,
   QuestionDialog,
-  BackupRestoreDialog
+  BackupRestoreDialog,
+  ThemeSwitcherDialog
 } from './screens/Dialogs.js';
 import { ProviderRepository } from '../database/repositories/providerRepository.js';
 import { ModelRepository } from '../database/repositories/modelRepository.js';
@@ -58,7 +59,7 @@ export const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
 
   // Dialog-specific states
-  const [activeDialog, setActiveDialog] = useState<'none' | 'provider-form' | 'provider-list' | 'model-form' | 'model-switcher' | 'settings' | 'permissions' | 'agent-switcher' | 'history-switcher' | 'skills-list' | 'mcp-list' | 'tools-list' | 'tool-permissions' | 'question-prompt' | 'backup-restore'>('none');
+  const [activeDialog, setActiveDialog] = useState<'none' | 'provider-form' | 'provider-list' | 'model-form' | 'model-switcher' | 'settings' | 'permissions' | 'agent-switcher' | 'history-switcher' | 'skills-list' | 'mcp-list' | 'tools-list' | 'tool-permissions' | 'question-prompt' | 'backup-restore' | 'themes-switcher'>('none');
   const [backupRestoreMode, setBackupRestoreMode] = useState<'backup' | 'restore'>('backup');
   const [availableModels, setAvailableModels] = useState<Array<Model & { provider_name: string }>>([]);
   const [availableProviders, setAvailableProviders] = useState<Provider[]>([]);
@@ -383,8 +384,10 @@ export const App: React.FC = () => {
     } else if (cmd === '/backup' || cmd === '/restore' || cmd === '/backup & restore') {
       setBackupRestoreMode(cmd === '/restore' ? 'restore' : 'backup');
       setActiveDialog('backup-restore');
+    } else if (cmd === '/themes') {
+      setActiveDialog('themes-switcher');
     } else if (cmd === '/help') {
-      stateManager.setState({ errorMsg: 'Slash commands: /update latest, /uninstall, /provider api, /add model, /all models, /agents, /skills, /history, /mcp, /tools, /permissions, /settings, /backup, /restore, /help, /exit' });
+      stateManager.setState({ errorMsg: 'Slash commands: /update latest, /uninstall, /provider api, /add model, /all models, /agents, /skills, /history, /mcp, /tools, /permissions, /settings, /themes, /backup, /restore, /help, /exit' });
     } else if (cmd === '/exit') {
       terminateMarkdownWorker();
       exit();
@@ -627,6 +630,12 @@ export const App: React.FC = () => {
     themeManager.setTheme(themeId);
     settingRepo.setSetting('streaming', { enabled: streaming });
     stateManager.setState({ isStreaming: streaming });
+    setActiveDialog('none');
+  };
+
+  const handleThemeSelect = (themeId: string) => {
+    themeManager.setTheme(themeId);
+    stateManager.setState({ activeThemeId: themeId } as any);
     setActiveDialog('none');
   };
 
@@ -967,6 +976,15 @@ export const App: React.FC = () => {
             <BackupRestoreDialog
               initialMode={backupRestoreMode}
               onSubmit={handleBackupRestoreSubmit}
+              onClose={() => setActiveDialog('none')}
+            />
+          </Box>
+        )}
+
+        {activeDialog === 'themes-switcher' && (
+          <Box justifyContent="center" marginY={1}>
+            <ThemeSwitcherDialog
+              onSelect={handleThemeSelect}
               onClose={() => setActiveDialog('none')}
             />
           </Box>

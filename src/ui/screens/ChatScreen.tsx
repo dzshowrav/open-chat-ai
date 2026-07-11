@@ -325,7 +325,7 @@ const MessageItem = ({ msg, idx, isActive, allMessages }: { msg: Message, idx: n
         {!isError && msg.content && (
           <Box marginLeft={1} marginY={0.2}>
             {isVerboseTool ? (
-              <Text color="gray" dimColor>  ⎿  Read {linesCount} lines (Context loaded in background)</Text>
+              <Text color="#8e9aa8">  ⎿  Read {linesCount} lines (Context loaded in background)</Text>
             ) : (
               <ShellSubmessageMotion output={msg.content} isActive={isActive} />
             )}

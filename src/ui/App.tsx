@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, Text, useInput, useApp, useStdout } from 'ink';
 import { stateManager, AppState } from '../core/state.js';
 import { AppEngine } from '../core/engine.js';
@@ -95,6 +95,8 @@ export const App: React.FC = () => {
   const [state, setState] = useState<AppState>(stateManager.getState());
   const [prompt, setPrompt] = useState('');
   const [cursorPos, setCursorPos] = useState(0); // cursor position in prompt
+  const cursorPromptLen = useRef(0); // tracks prompt.length without stale closures
+  cursorPromptLen.current = prompt.length;
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -280,8 +282,8 @@ export const App: React.FC = () => {
       return; 
     }
 
-    // Ignore other navigation keys
-    if (key.upArrow || key.downArrow || key.leftArrow || key.rightArrow || key.tab) {
+    // Ignore tab key (reserved for palette navigation)
+    if (key.tab) {
       return;
     }
 
@@ -329,7 +331,7 @@ export const App: React.FC = () => {
       return;
     }
     if (key.rightArrow) {
-      setCursorPos(prev => Math.min(prompt.length, prev + 1));
+      setCursorPos(prev => Math.min(cursorPromptLen.current, prev + 1));
       return;
     }
     if (key.upArrow || key.downArrow) {

@@ -48,20 +48,24 @@ const renderPromptPreview = (text: string, cursorIdx: number, pasteDetected: boo
   const isMultiLine = lines.length > 1;
   const isVeryLong = text.length > 1000;
 
-  // Show compact preview only when paste was just detected AND text is large
+  // Show cursor with a block character (always computed for badge+full fallback)
+  const before = text.slice(0, cursorIdx);
+  const at = text[cursorIdx] || ' ';
+  const after = text.slice(cursorIdx + 1);
+
+  // When paste badge is active, show badge + full text with cursor
   if (pasteDetected && (isMultiLine || isVeryLong)) {
     const linesCount = lines.length;
     return (
-      <Text color="cyan" bold>
-        [Pasted ~{Math.max(1, linesCount)} lines]
+      <Text wrap="wrap">
+        <Text color="cyan" bold>[Pasted ~{Math.max(1, linesCount)} lines] </Text>
+        {before}
+        <Text backgroundColor="#555555" color="white">{at}</Text>
+        {after}
       </Text>
     );
   }
 
-  // Show cursor with a block character
-  const before = text.slice(0, cursorIdx);
-  const at = text[cursorIdx] || ' ';
-  const after = text.slice(cursorIdx + 1);
   return (
     <Text wrap="wrap">
       {before}
@@ -216,8 +220,11 @@ export const App: React.FC = () => {
     if (pasteBufRef.current) {
       const buf = pasteBufRef.current;
       pasteBufRef.current = '';
-      // Multiple chars accumulated = paste; single char = typing
-      pasteDetectedRef.current = buf.length > 3;
+      // Set paste badge when multiple chars arrive rapidly (paste, not typing)
+      if (buf.length > 3) {
+        pasteDetectedRef.current = true;
+      }
+      // Never CLEAR pasteDetectedRef here — only explicit edit actions clear it
       setPrompt(prev => prev.slice(0, cursorPos) + buf + prev.slice(cursorPos));
       setCursorPos(prev => prev + buf.length);
     }
@@ -284,6 +291,7 @@ export const App: React.FC = () => {
 
     if (key.ctrl && input === 'u') {
       flushPasteBuffer();
+      pasteDetectedRef.current = false;
       setPrompt('');
       setCursorPos(0);
       return;
@@ -298,6 +306,7 @@ export const App: React.FC = () => {
 
     if (key.ctrl && input === 'w') {
       flushPasteBuffer();
+      pasteDetectedRef.current = false;
       // Delete word before cursor (Ctrl+W)
       setPrompt(prev => {
         if (cursorPos <= 0) return prev;
@@ -324,6 +333,7 @@ export const App: React.FC = () => {
 
     if (key.return) {
       flushPasteBuffer();
+      pasteDetectedRef.current = false;
       if (key.shift || key.ctrl) {
         // Shift+Enter / Ctrl+Enter submits
         if (enterTimerRef.current) {
@@ -368,6 +378,7 @@ export const App: React.FC = () => {
 
     if (key.backspace || key.delete) {
       flushPasteBuffer();
+      pasteDetectedRef.current = false;
       setPrompt(prev => {
         if (cursorPos <= 0) return prev;
         const next = prev.slice(0, cursorPos - 1) + prev.slice(cursorPos);

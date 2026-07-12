@@ -202,16 +202,32 @@ function renderCodeBlockFooter(columns: number = terminalColumns): string {
   return c.hex('#3d59a1')('╰' + '─'.repeat(width - 2) + '╯');
 }
 
-// ─── Line-number gutter renderer ─────────────────────────────────────────────
-function addLineNumbers(code: string): string {
-  const lines = code.split('\n');
-  // Skip line numbers for short snippets (not worth the visual noise)
-  if (lines.length < 4) return code;
-  const width = String(lines.length).length;
+// ─── Box-drawing body wrapper for code blocks ───────────────────────────────
+function renderCodeBlockLines(highlightedCode: string, columns: number = terminalColumns): string {
+  const width = Math.max(20, Math.min(columns - 4, 80));
+  const insideWidth = width - 4; // leave room for borders "│ " and " │"
+  const lines = highlightedCode.split('\n');
+  const showLineNums = lines.length >= 4;
+  const widthPadding = showLineNums ? String(lines.length).length : 0;
+
+  const bord = (s: string) => c.hex('#3d59a1')(s);
+
   return lines
     .map((line, i) => {
-      const num = String(i + 1).padStart(width, ' ');
-      return c.hex('#565f89')(num + ' │ ') + line;
+      let lineWithNum = line;
+      if (showLineNums) {
+        const num = String(i + 1).padStart(widthPadding, ' ');
+        lineWithNum = c.hex('#565f89')(num + ' │ ') + line;
+      }
+      
+      const visibleLen = getVisibleLength(lineWithNum);
+      if (visibleLen > insideWidth) {
+        const truncated = truncateAnsi(lineWithNum, insideWidth);
+        return bord('│ ') + truncated + bord(' │');
+      } else {
+        const pad = ' '.repeat(insideWidth - visibleLen);
+        return bord('│ ') + lineWithNum + pad + bord(' │');
+      }
     })
     .join('\n');
 }
@@ -743,11 +759,11 @@ function processMarkdown(text: string, id: string, partial: boolean): ProcessRes
 
       const rawCode = codeLines.join('\n');
       const highlighted = highlightCode(rawCode, codeLang, terminalColumns);
-      const withLineNums = addLineNumbers(highlighted);
+      const boxedLines = renderCodeBlockLines(highlighted, terminalColumns);
 
       output.push('');
       output.push(renderCodeBlockHeader(codeLang, terminalColumns));
-      output.push(withLineNums);
+      output.push(boxedLines);
       output.push(renderCodeBlockFooter(terminalColumns));
       output.push('');
 
@@ -785,10 +801,10 @@ function processMarkdown(text: string, id: string, partial: boolean): ProcessRes
   if (inCodeBlock && codeLines.length > 0) {
     const rawCode = codeLines.join('\n');
     const highlighted = highlightCode(rawCode, codeLang, terminalColumns);
-    const withLineNums = addLineNumbers(highlighted);
+    const boxedLines = renderCodeBlockLines(highlighted, terminalColumns);
     output.push('');
     output.push(renderCodeBlockHeader(codeLang, terminalColumns));
-    output.push(withLineNums);
+    output.push(boxedLines);
     if (partial) {
       // Show a live streaming indicator
       output.push(c.hex('#3d59a1')('╰') + c.hex('#565f89').dim(' …streaming…'));

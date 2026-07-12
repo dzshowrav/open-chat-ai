@@ -423,35 +423,32 @@ export const App: React.FC = () => {
     }
     if (key.upArrow) {
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
-      const lines = prompt.split('\n');
-      let charCount = 0;
-      let curLine = 0;
-      for (let i = 0; i < lines.length; i++) {
-        if (charCount + lines[i].length >= cursorPos) { curLine = i; break; }
-        charCount += lines[i].length + 1;
-      }
-      if (curLine > 0) {
-        const colInLine = cursorPos - charCount;
-        const prevLineStart = charCount - lines[curLine - 1].length - 1;
-        const prevLineLen = lines[curLine - 1].length;
-        setCursorPos(prevLineStart + Math.min(colInLine, prevLineLen));
+      const before = prompt.slice(0, cursorPos);
+      const prevNl = before.lastIndexOf('\n');
+      if (prevNl !== -1) {
+        const col = cursorPos - prevNl - 1; // column in current line
+        const beforePrev = before.slice(0, prevNl);
+        const prevLineStart = beforePrev.lastIndexOf('\n') + 1; // 0 if not found (-1+1=0)
+        const prevLineLen = prevNl - prevLineStart;
+        setCursorPos(prevLineStart + Math.min(col, prevLineLen));
       }
       return;
     }
     if (key.downArrow) {
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
-      const lines = prompt.split('\n');
-      let charCount = 0;
-      let curLine = 0;
-      for (let i = 0; i < lines.length; i++) {
-        if (charCount + lines[i].length >= cursorPos) { curLine = i; break; }
-        charCount += lines[i].length + 1;
-      }
-      if (curLine < lines.length - 1) {
-        const colInLine = cursorPos - charCount;
-        const nextLineStart = charCount + lines[curLine].length + 1;
-        const nextLineLen = lines[curLine + 1].length;
-        setCursorPos(nextLineStart + Math.min(colInLine, nextLineLen));
+      const text = prompt;
+      const after = text.slice(cursorPos);
+      const nextNl = after.indexOf('\n');
+      if (nextNl !== -1) {
+        const beforeCursor = text.slice(0, cursorPos);
+        const curLineStart = beforeCursor.lastIndexOf('\n') + 1;
+        const col = cursorPos - curLineStart;
+        // Next line starts right after this newline
+        const nextLineStart = cursorPos + nextNl + 1;
+        const afterNext = text.slice(nextLineStart);
+        const nextLineEnd = afterNext.indexOf('\n');
+        const nextLineLen = nextLineEnd === -1 ? afterNext.length : nextLineEnd;
+        setCursorPos(nextLineStart + Math.min(col, nextLineLen));
       }
       return;
     }

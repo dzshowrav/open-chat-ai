@@ -1,5 +1,7 @@
 import { ToolManager } from '../toolManager.js';
-import { execSync } from 'child_process';
+import { execSync, exec } from 'child_process';
+import { promisify } from 'util';
+const asyncExec = promisify(exec);
 import { stateManager } from '../../core/state.js';
 import { SkillsManager } from '../../skills/skillsManager.js';
 import { McpManager } from '../../mcp/mcpManager.js';
@@ -159,7 +161,7 @@ export function registerExtendedTools(): void {
       // Escape pattern for shell
       const escapedPattern = args.pattern.replace(/'/g, "'\\''");
       const cmd = `grep -rnE ${caseFlag} '${escapedPattern}' ${includeFlag} . 2>/dev/null || true`;
-      const rawResult = execSync(cmd, { cwd: searchPath, encoding: 'utf8', timeout: 15000 });
+      const { stdout: rawResult } = await asyncExec(cmd, { cwd: searchPath, timeout: 15000 });
       const lines = rawResult.trim().split('\n').filter(Boolean);
       const maxResults = args.max_results || 50;
       const truncated = lines.length > maxResults;
@@ -210,7 +212,8 @@ export function registerExtendedTools(): void {
       }
 
       const cmd = `find . ${findArgs} ${excludeFlags} -type f 2>/dev/null`;
-      const result = execSync(cmd, { cwd: wsPath, encoding: 'utf8', timeout: 10000 }).trim();
+      const { stdout: resultRaw } = await asyncExec(cmd, { cwd: wsPath, timeout: 10000 });
+      const result = resultRaw.trim();
       if (!result) return `No files matched pattern: "${args.pattern}" in ${wsPath}`;
       const files = result.split('\n').filter(Boolean);
       return `Found ${files.length} file(s) matching "${args.pattern}":\n${files.join('\n')}`;
@@ -370,7 +373,7 @@ export function registerExtendedTools(): void {
 
       const fileArg = args.file ? `"${args.file}"` : '';
       const cmd = `${tscPath} --noEmit ${fileArg} 2>&1 || true`;
-      const result = execSync(cmd, { cwd: wsPath, encoding: 'utf8', timeout: 60000 });
+      const { stdout: result } = await asyncExec(cmd, { cwd: wsPath, timeout: 60000 });
       const output = result.trim();
       if (!output || output === '') return `✔ No TypeScript type errors found${args.file ? ` in ${args.file}` : ' in project'}.`;
       const lines = output.split('\n');
@@ -411,27 +414,28 @@ export function registerExtendedTools(): void {
         : args.typeName;
       const pattern = `(export )?(${kindFilter})\\s+${nameMatch}`;
 
-      let result = execSync(
+      let resultRaw = (await asyncExec(
         `grep -rnE '${pattern}' src/ 2>/dev/null || true`,
-        { cwd: wsPath, encoding: 'utf8', timeout: 10000 }
-      ).slice(0, 3000);
+        { cwd: wsPath, timeout: 10000 }
+      )).stdout.slice(0, 3000);
 
-      if (!result.trim()) {
-        result = execSync(
+      if (!resultRaw.trim()) {
+        resultRaw = (await asyncExec(
           `grep -rnE '${pattern}' . --include='*.ts' --include='*.tsx' 2>/dev/null || true`,
-          { cwd: wsPath, encoding: 'utf8', timeout: 10000 }
-        ).slice(0, 3000);
+          { cwd: wsPath, timeout: 10000 }
+        )).stdout.slice(0, 3000);
       }
 
-      if (!result.trim()) return `Type "${args.typeName}" not found. Try exact=false or check the type name spelling.`;
+      if (!resultRaw.trim()) return `Type "${args.typeName}" not found. Try exact=false or check the type name spelling.`;
 
-      let output = `Type definitions matching "${args.typeName}":\n\n${result}`;
+      let output = `Type definitions matching "${args.typeName}":\n\n${resultRaw}`;
 
       if (args.includeUsages) {
-        const usageResult = execSync(
+        const { stdout: usageRaw } = await asyncExec(
           `grep -rnE '\\b${args.typeName}\\b' src/ --include='*.ts' --include='*.tsx' 2>/dev/null | grep -v '${pattern}' || true`,
-          { cwd: wsPath, encoding: 'utf8', timeout: 10000 }
-        ).slice(0, 2000);
+          { cwd: wsPath, timeout: 10000 }
+        );
+        const usageResult = usageRaw.slice(0, 2000);
         if (usageResult.trim()) {
           output += `\n\nUsages/imports of "${args.typeName}":\n${usageResult}`;
         }
@@ -466,9 +470,9 @@ export function registerExtendedTools(): void {
       const kindFilter = args.kind
         ? args.kind.split(',').map((k: string) => k.trim()).join('|')
         : 'interface|type|class|enum|function|const';
-      const result = execSync(
+      const { stdout: result } = await asyncExec(
         `grep -rhE '^(export )?(${kindFilter}) [A-Za-z]' ${searchDir} --include='*.ts' --include='*.tsx' 2>/dev/null || true`,
-        { cwd: wsPath, encoding: 'utf8', timeout: 15000 }
+        { cwd: wsPath, timeout: 15000 }
       );
       const lines = result.trim().split('\n').filter(Boolean);
       const limit = args.limit || 50;

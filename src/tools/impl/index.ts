@@ -1,7 +1,9 @@
 import { ToolManager } from '../toolManager.js';
 import fs from 'fs';
 import path from 'path';
-import { execSync, spawn, ChildProcess } from 'child_process';
+import { execSync, exec, spawn, ChildProcess } from 'child_process';
+import { promisify } from 'util';
+const asyncExec = promisify(exec);
 import { stateManager } from '../../core/state.js';
 import { SessionRepository } from '../../database/repositories/sessionRepository.js';
 import { registerExtendedTools } from './extendedTools.js';
@@ -376,14 +378,13 @@ export function registerBuiltInTools(): void {
     const cwd = args.workdir ? path.resolve(wsPath, args.workdir) : wsPath;
     const timeout = args.timeout || 30000;
     try {
-      const output = execSync(args.command, {
+      const { stdout, stderr } = await asyncExec(args.command, {
         cwd,
-        encoding: 'utf8',
-        stdio: 'pipe',
         timeout,
         maxBuffer: 1024 * 1024 * 4 // 4MB
       });
-      const result = (output || '(Command completed with no stdout output)').slice(0, 8000);
+      const output = stdout || stderr || '(Command completed with no stdout output)';
+      const result = output.slice(0, 8000);
       logToolExecution('bash', { command: args.command }, 'success', Date.now() - start);
       return result;
     } catch (err: any) {
@@ -401,7 +402,8 @@ export function registerBuiltInTools(): void {
   }, async () => {
     const wsPath = stateManager.getState().workspacePath;
     try {
-      return execSync('git status', { cwd: wsPath, encoding: 'utf8' });
+      const { stdout } = await asyncExec('git status', { cwd: wsPath });
+      return stdout;
     } catch (err: any) {
       if (err.message?.includes('not a git repository')) {
         return 'Not a git repository. Git tracking is not initialized in this workspace.';
@@ -427,7 +429,8 @@ export function registerBuiltInTools(): void {
       const stagedFlag = args.staged ? '--staged' : '';
       const fileFlag = args.file ? `-- "${args.file}"` : '';
       const cmd = `git diff ${stagedFlag} ${fileFlag}`.trim();
-      return execSync(cmd, { cwd: wsPath, encoding: 'utf8' }) || '(No differences found)';
+      const { stdout } = await asyncExec(cmd, { cwd: wsPath });
+      return stdout || '(No differences found)';
     } catch (err: any) {
       if (err.message?.includes('not a git repository')) {
         return 'Not a git repository. Git tracking is not initialized in this workspace.';

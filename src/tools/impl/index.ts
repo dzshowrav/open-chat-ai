@@ -1,9 +1,24 @@
 import { ToolManager } from '../toolManager.js';
 import fs from 'fs';
 import path from 'path';
-import { execSync, exec, spawn, ChildProcess } from 'child_process';
-import { promisify } from 'util';
-const asyncExec = promisify(exec);
+import { spawn, ChildProcess } from 'child_process';
+import { eventBus } from '../../core/events.js';
+
+/** Simple async spawn wrapper (no live output — for quick git calls) */
+function spawnPromise(cmd: string, args: string[], opts: any): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, { ...opts, shell: false });
+    let stdout = '';
+    let stderr = '';
+    child.stdout?.on('data', (chunk: Buffer) => { stdout += chunk.toString(); });
+    child.stderr?.on('data', (chunk: Buffer) => { stderr += chunk.toString(); });
+    child.on('error', (err) => reject(err));
+    child.on('close', (code) => {
+      if (code === 0) resolve(stdout);
+      else reject(new Error(stderr || `Exit code ${code}`));
+    });
+  });
+}
 import { stateManager } from '../../core/state.js';
 import { SessionRepository } from '../../database/repositories/sessionRepository.js';
 import { registerExtendedTools } from './extendedTools.js';
@@ -378,17 +393,58 @@ export function registerBuiltInTools(): void {
     const cwd = args.workdir ? path.resolve(wsPath, args.workdir) : wsPath;
     const timeout = args.timeout || 30000;
     try {
-      const { stdout, stderr } = await asyncExec(args.command, {
-        cwd,
-        timeout,
-        maxBuffer: 1024 * 1024 * 4 // 4MB
+      // Use spawn for live stdout/stderr streaming
+      const output = await new Promise<string>((resolve, reject) => {
+        const child = spawn(args.command, [], {
+          shell: true,
+          cwd,
+          stdio: ['pipe', 'pipe', 'pipe'],
+          timeout,
+        });
+        let stdout = '';
+        let stderr = '';
+        let done = false;
+
+        const finish = (err?: Error) => {
+          if (done) return;
+          done = true;
+          if (err) reject(err);
+          else resolve(stdout || stderr || '(Command completed with no stdout output)');
+        };
+
+        child.stdout?.on('data', (chunk: Buffer) => {
+          const text = chunk.toString();
+          stdout += text;
+          eventBus.emit('tool:output', { text });
+        });
+
+        child.stderr?.on('data', (chunk: Buffer) => {
+          const text = chunk.toString();
+          stderr += text;
+          eventBus.emit('tool:output', { text });
+        });
+
+        child.on('error', (err) => finish(err));
+        child.on('close', (code) => finish());
+
+        // Timeout handling
+        if (timeout > 0) {
+          setTimeout(() => {
+            if (!done) {
+              child.kill('SIGTERM');
+              const msg = stdout + stderr + `\n[Command timed out after ${timeout}ms]`;
+              eventBus.emit('tool:output', { text: `\n[Timed out]` });
+              resolve(msg.slice(0, 8000));
+            }
+          }, timeout);
+        }
       });
-      const output = stdout || stderr || '(Command completed with no stdout output)';
+
       const result = output.slice(0, 8000);
       logToolExecution('bash', { command: args.command }, 'success', Date.now() - start);
       return result;
     } catch (err: any) {
-      const errMsg = [err.stdout, err.stderr, err.message].filter(Boolean).join('\n').slice(0, 4000);
+      const errMsg = err.message || 'Unknown error';
       logToolExecution('bash', { command: args.command }, 'failure', Date.now() - start);
       throw new Error(`Command failed:\n${errMsg}`);
     }
@@ -402,13 +458,13 @@ export function registerBuiltInTools(): void {
   }, async () => {
     const wsPath = stateManager.getState().workspacePath;
     try {
-      const { stdout } = await asyncExec('git status', { cwd: wsPath });
-      return stdout;
+      const out = await spawnPromise('git', ['status'], { cwd: wsPath });
+      return out;
     } catch (err: any) {
       if (err.message?.includes('not a git repository')) {
         return 'Not a git repository. Git tracking is not initialized in this workspace.';
       }
-      return `Git status failed: ${err.stderr || err.message}`;
+      return `Git status failed: ${err.message}`;
     }
   });
 
@@ -426,16 +482,16 @@ export function registerBuiltInTools(): void {
   }, async (args) => {
     const wsPath = stateManager.getState().workspacePath;
     try {
-      const stagedFlag = args.staged ? '--staged' : '';
-      const fileFlag = args.file ? `-- "${args.file}"` : '';
-      const cmd = `git diff ${stagedFlag} ${fileFlag}`.trim();
-      const { stdout } = await asyncExec(cmd, { cwd: wsPath });
-      return stdout || '(No differences found)';
+      const gitArgs = ['diff'];
+      if (args.staged) gitArgs.push('--staged');
+      if (args.file) gitArgs.push('--', args.file);
+      const out = await spawnPromise('git', gitArgs, { cwd: wsPath });
+      return out || '(No differences found)';
     } catch (err: any) {
       if (err.message?.includes('not a git repository')) {
         return 'Not a git repository. Git tracking is not initialized in this workspace.';
       }
-      return `Git diff failed: ${err.stderr || err.message}`;
+      return `Git diff failed: ${err.message}`;
     }
   });
 

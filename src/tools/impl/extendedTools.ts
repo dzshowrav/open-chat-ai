@@ -1,5 +1,5 @@
 import { ToolManager } from '../toolManager.js';
-import { execSync, exec } from 'child_process';
+import { exec } from 'child_process';
 import { promisify } from 'util';
 const asyncExec = promisify(exec);
 import { stateManager } from '../../core/state.js';

@@ -22,6 +22,9 @@ export interface AppEventPayloads {
   'tool:started': { toolName: string; args: Record<string, any> };
   'tool:finished': { toolName: string; result: any; duration: number };
   'tool:failed': { toolName: string; error: string; duration: number };
+  'tool:output': { text: string };
+  'tool:executing': { toolName: string; toolId: string; index: number };
+  'tool:executed': { toolName: string; toolId: string; index: number; success: boolean };
   'permission:request': { toolName: string; args: Record<string, any>; resolve: (val: 'always_allow' | 'allow_once' | 'deny') => void };
   
   'stream:started': { sessionId: number; model: string };

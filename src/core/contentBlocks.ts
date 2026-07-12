@@ -13,6 +13,7 @@
  */
 
 import { ToolManager } from '../tools/toolManager.js';
+import { eventBus } from './events.js';
 
 // ─────────────────────────────────────────────────────────
 // Types
@@ -162,16 +163,22 @@ export async function executeToolCalls(
   accumulatedToolCalls: any[]
 ): Promise<ApiMessage[]> {
   const toolMessages: ApiMessage[] = [];
-  const validCalls = (accumulatedToolCalls || []).filter(
-    (tc) => tc !== null && tc !== undefined
-  );
 
-  for (const tc of validCalls) {
-    const toolName = tc.function?.name || 'unknown';
+  for (let i = 0; i < accumulatedToolCalls.length; i++) {
+    const tc = accumulatedToolCalls[i];
+    if (!tc || !tc.function) continue;
+
+    const toolName = tc.function.name || 'unknown';
     const toolId = tc.id || '';
     const toolArgs = parseToolArgs(tc);
 
+    // Emit executing event — ToolCallStreamCard switches to 'running' state
+    eventBus.emit('tool:executing', { toolName, toolId, index: i });
+
     const result = await executeSingleTool(toolName, toolArgs);
+
+    // Emit executed event — ToolCallStreamCard switches to 'completed' state
+    eventBus.emit('tool:executed', { toolName, toolId, index: i, success: result.success });
 
     toolMessages.push({
       role: 'tool',

@@ -410,40 +410,19 @@ export const App: React.FC = () => {
       return;
     }
 
-    // Arrow keys — move cursor position
+    // Arrow keys — normal cursor movement (dismiss paste badge if active)
     if (key.leftArrow) {
-      const addedLeft = flushPasteBuffer();
-      const actualCursor = cursorPos + addedLeft;
-      const pEnd = prePasteLenRef.current + pasteLenRef.current;
-      if (pasteDetectedRef.current && actualCursor > pEnd) {
-        // In suffix after paste → clamp at paste end
-        setCursorPos(pEnd);
-      } else if (pasteDetectedRef.current && actualCursor > prePasteLenRef.current && actualCursor <= pEnd) {
-        // At or inside paste content → jump to before paste
-        setCursorPos(prePasteLenRef.current);
-      } else {
-        setCursorPos(prev => Math.max(0, prev - 1));
-      }
+      if (pasteDetectedRef.current) pasteDetectedRef.current = false;
+      setCursorPos(prev => Math.max(0, prev - 1));
       return;
     }
     if (key.rightArrow) {
-      const addedRight = flushPasteBuffer();
-      const actualCursor = cursorPos + addedRight;
-      const pEnd = prePasteLenRef.current + pasteLenRef.current;
-      if (pasteDetectedRef.current && actualCursor < prePasteLenRef.current) {
-        // Before paste → jump over it
-        setCursorPos(pEnd);
-      } else if (pasteDetectedRef.current && actualCursor >= prePasteLenRef.current && actualCursor < pEnd) {
-        // At or inside paste → jump to after paste
-        setCursorPos(pEnd);
-      } else {
-        setCursorPos(prev => Math.min(cursorPromptLen.current, prev + 1));
-      }
+      if (pasteDetectedRef.current) pasteDetectedRef.current = false;
+      setCursorPos(prev => Math.min(cursorPromptLen.current, prev + 1));
       return;
     }
     if (key.upArrow) {
-      flushPasteBuffer();
-      if (pasteDetectedRef.current) return;
+      if (pasteDetectedRef.current) pasteDetectedRef.current = false;
       const lines = prompt.split('\n');
       let charCount = 0;
       let curLine = 0;
@@ -460,8 +439,7 @@ export const App: React.FC = () => {
       return;
     }
     if (key.downArrow) {
-      flushPasteBuffer();
-      if (pasteDetectedRef.current) return;
+      if (pasteDetectedRef.current) pasteDetectedRef.current = false;
       const lines = prompt.split('\n');
       let charCount = 0;
       let curLine = 0;

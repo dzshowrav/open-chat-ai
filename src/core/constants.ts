@@ -36,6 +36,7 @@ export interface Theme {
   accentColor: string;
   darkMode: boolean;
   backgroundColor: string;
+  textColor: string;
 }
 
 export const BUILT_IN_THEMES: Record<string, Theme> = {
@@ -46,7 +47,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#6200ff',
     accentColor: '#ff0080',
     darkMode: false,
-    backgroundColor: '#f0f0f0'
+    backgroundColor: '#f0f0f0',
+    textColor: '#0a0a0a'
   },
   'amoled-dark': {
     id: 'amoled-dark',
@@ -55,7 +57,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#b388ff',
     accentColor: '#ff4081',
     darkMode: true,
-    backgroundColor: '#000000'
+    backgroundColor: '#000000',
+    textColor: '#ffffff'
   },
   'aura-light': {
     id: 'aura-light',
@@ -64,7 +67,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#a277ff',
     accentColor: '#d94f4f',
     darkMode: false,
-    backgroundColor: '#f5f0ff'
+    backgroundColor: '#f5f0ff',
+    textColor: '#2d2640'
   },
   'aura-dark': {
     id: 'aura-dark',
@@ -73,7 +77,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#a277ff',
     accentColor: '#ff6767',
     darkMode: true,
-    backgroundColor: '#15141b'
+    backgroundColor: '#15141b',
+    textColor: '#edecee'
   },
   'ayu-light': {
     id: 'ayu-light',
@@ -82,7 +87,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#4aa8c8',
     accentColor: '#ef7d71',
     darkMode: false,
-    backgroundColor: '#fdfaf4'
+    backgroundColor: '#fdfaf4',
+    textColor: '#4f5964'
   },
   'ayu-dark': {
     id: 'ayu-dark',
@@ -91,7 +97,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#3fb7e3',
     accentColor: '#f2856f',
     darkMode: true,
-    backgroundColor: '#0f1419'
+    backgroundColor: '#0f1419',
+    textColor: '#d6dae0'
   },
   'carbonfox-light': {
     id: 'carbonfox-light',
@@ -100,7 +107,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#0072c3',
     accentColor: '#da1e28',
     darkMode: false,
-    backgroundColor: '#8e8e8e'
+    backgroundColor: '#8e8e8e',
+    textColor: '#161616'
   },
   'carbonfox-dark': {
     id: 'carbonfox-dark',
@@ -109,7 +117,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#33b1ff',
     accentColor: '#ff8389',
     darkMode: true,
-    backgroundColor: '#393939'
+    backgroundColor: '#393939',
+    textColor: '#f2f4f8'
   },
   'catppuccin-light': {
     id: 'catppuccin-light',
@@ -118,7 +127,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#7287fd',
     accentColor: '#d20f39',
     darkMode: false,
-    backgroundColor: '#f5e0dc'
+    backgroundColor: '#f5e0dc',
+    textColor: '#4c4f69'
   },
   'catppuccin-dark': {
     id: 'catppuccin-dark',
@@ -127,7 +137,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#b4befe',
     accentColor: '#f38ba8',
     darkMode: true,
-    backgroundColor: '#1e1e2e'
+    backgroundColor: '#1e1e2e',
+    textColor: '#cdd6f4'
   },
   'catppuccin-frappe-dark': {
     id: 'catppuccin-frappe-dark',
@@ -136,7 +147,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#8da4e2',
     accentColor: '#f4b8e4',
     darkMode: true,
-    backgroundColor: '#303446'
+    backgroundColor: '#303446',
+    textColor: '#c6d0f5'
   },
   'catppuccin-macchiato-dark': {
     id: 'catppuccin-macchiato-dark',
@@ -145,7 +157,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#8aadf4',
     accentColor: '#f5bde6',
     darkMode: true,
-    backgroundColor: '#24273a'
+    backgroundColor: '#24273a',
+    textColor: '#cad3f5'
   },
   'cobalt2-light': {
     id: 'cobalt2-light',
@@ -154,7 +167,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#0066cc',
     accentColor: '#00acc1',
     darkMode: false,
-    backgroundColor: '#ffffff'
+    backgroundColor: '#ffffff',
+    textColor: '#193549'
   },
   'cobalt2-dark': {
     id: 'cobalt2-dark',
@@ -163,7 +177,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#0088ff',
     accentColor: '#2affdf',
     darkMode: true,
-    backgroundColor: '#193549'
+    backgroundColor: '#193549',
+    textColor: '#ffffff'
   },
   'cursor-light': {
     id: 'cursor-light',
@@ -172,7 +187,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#6f9ba6',
     accentColor: '#6f9ba6',
     darkMode: false,
-    backgroundColor: '#fcfcfc'
+    backgroundColor: '#fcfcfc',
+    textColor: '#141414'
   },
   'cursor-dark': {
     id: 'cursor-dark',
@@ -181,7 +197,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#88c0d0',
     accentColor: '#88c0d0',
     darkMode: true,
-    backgroundColor: '#181818'
+    backgroundColor: '#181818',
+    textColor: '#e4e4e4'
   },
   'dracula-light': {
     id: 'dracula-light',
@@ -190,7 +207,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#7c6bf5',
     accentColor: '#d16090',
     darkMode: false,
-    backgroundColor: '#f8f8f2'
+    backgroundColor: '#f8f8f2',
+    textColor: '#1f1f2f'
   },
   'dracula-dark': {
     id: 'dracula-dark',
@@ -199,7 +217,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#bd93f9',
     accentColor: '#ff79c6',
     darkMode: true,
-    backgroundColor: '#1d1e28'
+    backgroundColor: '#1d1e28',
+    textColor: '#f8f8f2'
   },
   'everforest-light': {
     id: 'everforest-light',
@@ -208,7 +227,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#8da101',
     accentColor: '#df69ba',
     darkMode: false,
-    backgroundColor: '#fdf6e3'
+    backgroundColor: '#fdf6e3',
+    textColor: '#5c6a72'
   },
   'everforest-dark': {
     id: 'everforest-dark',
@@ -217,7 +237,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#a7c080',
     accentColor: '#d699b6',
     darkMode: true,
-    backgroundColor: '#2d353b'
+    backgroundColor: '#2d353b',
+    textColor: '#d3c6aa'
   },
   'flexoki-light': {
     id: 'flexoki-light',
@@ -226,7 +247,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#205EA6',
     accentColor: '#BC5215',
     darkMode: false,
-    backgroundColor: '#FFFCF0'
+    backgroundColor: '#FFFCF0',
+    textColor: '#100F0F'
   },
   'flexoki-dark': {
     id: 'flexoki-dark',
@@ -235,7 +257,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#DA702C',
     accentColor: '#8B7EC8',
     darkMode: true,
-    backgroundColor: '#100F0F'
+    backgroundColor: '#100F0F',
+    textColor: '#CECDC3'
   },
   'github-light': {
     id: 'github-light',
@@ -244,7 +267,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#0969da',
     accentColor: '#1b7c83',
     darkMode: false,
-    backgroundColor: '#ffffff'
+    backgroundColor: '#ffffff',
+    textColor: '#24292f'
   },
   'github-dark': {
     id: 'github-dark',
@@ -253,7 +277,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#58a6ff',
     accentColor: '#39c5cf',
     darkMode: true,
-    backgroundColor: '#0d1117'
+    backgroundColor: '#0d1117',
+    textColor: '#c9d1d9'
   },
   'gruvbox-light': {
     id: 'gruvbox-light',
@@ -262,7 +287,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#076678',
     accentColor: '#9d0006',
     darkMode: false,
-    backgroundColor: '#fbf1c7'
+    backgroundColor: '#fbf1c7',
+    textColor: '#3c3836'
   },
   'gruvbox-dark': {
     id: 'gruvbox-dark',
@@ -271,7 +297,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#83a598',
     accentColor: '#fb4934',
     darkMode: true,
-    backgroundColor: '#282828'
+    backgroundColor: '#282828',
+    textColor: '#ebdbb2'
   },
   'kanagawa-light': {
     id: 'kanagawa-light',
@@ -280,7 +307,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#2D4F67',
     accentColor: '#D27E99',
     darkMode: false,
-    backgroundColor: '#F2E9DE'
+    backgroundColor: '#F2E9DE',
+    textColor: '#54433A'
   },
   'kanagawa-dark': {
     id: 'kanagawa-dark',
@@ -289,7 +317,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#7E9CD8',
     accentColor: '#D27E99',
     darkMode: true,
-    backgroundColor: '#1F1F28'
+    backgroundColor: '#1F1F28',
+    textColor: '#DCD7BA'
   },
   'lucent-orng-light': {
     id: 'lucent-orng-light',
@@ -298,7 +327,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#EC5B2B',
     accentColor: '#c94d24',
     darkMode: false,
-    backgroundColor: '#fff5f0'
+    backgroundColor: '#fff5f0',
+    textColor: '#1a1a1a'
   },
   'lucent-orng-dark': {
     id: 'lucent-orng-dark',
@@ -307,7 +337,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#EC5B2B',
     accentColor: '#FFF7F1',
     darkMode: true,
-    backgroundColor: '#2a1a15'
+    backgroundColor: '#2a1a15',
+    textColor: '#eeeeee'
   },
   'material-light': {
     id: 'material-light',
@@ -316,7 +347,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#6182b8',
     accentColor: '#39adb5',
     darkMode: false,
-    backgroundColor: '#fafafa'
+    backgroundColor: '#fafafa',
+    textColor: '#263238'
   },
   'material-dark': {
     id: 'material-dark',
@@ -325,7 +357,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#82aaff',
     accentColor: '#89ddff',
     darkMode: true,
-    backgroundColor: '#263238'
+    backgroundColor: '#263238',
+    textColor: '#eeffff'
   },
   'matrix-light': {
     id: 'matrix-light',
@@ -334,7 +367,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#1cc24b',
     accentColor: '#c770ff',
     darkMode: false,
-    backgroundColor: '#eef3ea'
+    backgroundColor: '#eef3ea',
+    textColor: '#203022'
   },
   'matrix-dark': {
     id: 'matrix-dark',
@@ -343,7 +377,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#2eff6a',
     accentColor: '#c770ff',
     darkMode: true,
-    backgroundColor: '#0a0e0a'
+    backgroundColor: '#0a0e0a',
+    textColor: '#62ff94'
   },
   'mercury-light': {
     id: 'mercury-light',
@@ -352,7 +387,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#5266eb',
     accentColor: '#8da4f5',
     darkMode: false,
-    backgroundColor: '#ffffff'
+    backgroundColor: '#ffffff',
+    textColor: '#363644'
   },
   'mercury-dark': {
     id: 'mercury-dark',
@@ -361,7 +397,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#8da4f5',
     accentColor: '#8da4f5',
     darkMode: true,
-    backgroundColor: '#171721'
+    backgroundColor: '#171721',
+    textColor: '#dddde5'
   },
   'monokai-light': {
     id: 'monokai-light',
@@ -370,7 +407,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#bf7bff',
     accentColor: '#d9487c',
     darkMode: false,
-    backgroundColor: '#fdf8ec'
+    backgroundColor: '#fdf8ec',
+    textColor: '#292318'
   },
   'monokai-dark': {
     id: 'monokai-dark',
@@ -379,7 +417,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#ae81ff',
     accentColor: '#f92672',
     darkMode: true,
-    backgroundColor: '#272822'
+    backgroundColor: '#272822',
+    textColor: '#f8f8f2'
   },
   'night-owl-light': {
     id: 'night-owl-light',
@@ -388,7 +427,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#4876d6',
     accentColor: '#aa0982',
     darkMode: false,
-    backgroundColor: '#f0f0f0'
+    backgroundColor: '#f0f0f0',
+    textColor: '#403f53'
   },
   'night-owl-dark': {
     id: 'night-owl-dark',
@@ -397,7 +437,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#82aaff',
     accentColor: '#f78c6c',
     darkMode: true,
-    backgroundColor: '#011627'
+    backgroundColor: '#011627',
+    textColor: '#d6deeb'
   },
   'nord-light': {
     id: 'nord-light',
@@ -406,7 +447,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#5e81ac',
     accentColor: '#bf616a',
     darkMode: false,
-    backgroundColor: '#eceff4'
+    backgroundColor: '#eceff4',
+    textColor: '#2e3440'
   },
   'nord-dark': {
     id: 'nord-dark',
@@ -415,7 +457,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#88c0d0',
     accentColor: '#d57780',
     darkMode: true,
-    backgroundColor: '#2e3440'
+    backgroundColor: '#2e3440',
+    textColor: '#e5e9f0'
   },
   'one-dark-light': {
     id: 'one-dark-light',
@@ -424,7 +467,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#4078f2',
     accentColor: '#0184bc',
     darkMode: false,
-    backgroundColor: '#fafafa'
+    backgroundColor: '#fafafa',
+    textColor: '#383a42'
   },
   'one-dark-dark': {
     id: 'one-dark-dark',
@@ -433,7 +477,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#61afef',
     accentColor: '#56b6c2',
     darkMode: true,
-    backgroundColor: '#282c34'
+    backgroundColor: '#282c34',
+    textColor: '#abb2bf'
   },
   'one-dark-pro-light': {
     id: 'one-dark-pro-light',
@@ -442,7 +487,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#528bff',
     accentColor: '#d85462',
     darkMode: false,
-    backgroundColor: '#f5f6f8'
+    backgroundColor: '#f5f6f8',
+    textColor: '#2b303b'
   },
   'one-dark-pro-dark': {
     id: 'one-dark-pro-dark',
@@ -451,7 +497,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#61afef',
     accentColor: '#e06c75',
     darkMode: true,
-    backgroundColor: '#1e222a'
+    backgroundColor: '#1e222a',
+    textColor: '#abb2bf'
   },
   'opencode-default-light': {
     id: 'opencode-default-light',
@@ -460,7 +507,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#3b7dd8',
     accentColor: '#d68c27',
     darkMode: false,
-    backgroundColor: '#ffffff'
+    backgroundColor: '#ffffff',
+    textColor: '#1a1a1a'
   },
   'opencode-default-dark': {
     id: 'opencode-default-dark',
@@ -469,7 +517,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#fab283',
     accentColor: '#9d7cd8',
     darkMode: true,
-    backgroundColor: '#0a0a0a'
+    backgroundColor: '#0a0a0a',
+    textColor: '#eeeeee'
   },
   'orng-light': {
     id: 'orng-light',
@@ -478,7 +527,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#EC5B2B',
     accentColor: '#c94d24',
     darkMode: false,
-    backgroundColor: '#ffffff'
+    backgroundColor: '#ffffff',
+    textColor: '#1a1a1a'
   },
   'orng-dark': {
     id: 'orng-dark',
@@ -487,7 +537,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#EC5B2B',
     accentColor: '#FFF7F1',
     darkMode: true,
-    backgroundColor: '#0a0a0a'
+    backgroundColor: '#0a0a0a',
+    textColor: '#eeeeee'
   },
   'osaka-jade-light': {
     id: 'osaka-jade-light',
@@ -496,7 +547,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#1faa90',
     accentColor: '#3d7a52',
     darkMode: false,
-    backgroundColor: '#F6F5DD'
+    backgroundColor: '#F6F5DD',
+    textColor: '#111c18'
   },
   'osaka-jade-dark': {
     id: 'osaka-jade-dark',
@@ -505,7 +557,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#2DD5B7',
     accentColor: '#549e6a',
     darkMode: true,
-    backgroundColor: '#111c18'
+    backgroundColor: '#111c18',
+    textColor: '#C1C497'
   },
   'palenight-light': {
     id: 'palenight-light',
@@ -514,7 +567,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#4976eb',
     accentColor: '#00acc1',
     darkMode: false,
-    backgroundColor: '#fafafa'
+    backgroundColor: '#fafafa',
+    textColor: '#292d3e'
   },
   'palenight-dark': {
     id: 'palenight-dark',
@@ -523,7 +577,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#82aaff',
     accentColor: '#89ddff',
     darkMode: true,
-    backgroundColor: '#292d3e'
+    backgroundColor: '#292d3e',
+    textColor: '#a6accd'
   },
   'rose-pine-light': {
     id: 'rose-pine-light',
@@ -532,7 +587,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#31748f',
     accentColor: '#d7827e',
     darkMode: false,
-    backgroundColor: '#faf4ed'
+    backgroundColor: '#faf4ed',
+    textColor: '#575279'
   },
   'rose-pine-dark': {
     id: 'rose-pine-dark',
@@ -541,7 +597,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#9ccfd8',
     accentColor: '#ebbcba',
     darkMode: true,
-    backgroundColor: '#191724'
+    backgroundColor: '#191724',
+    textColor: '#e0def4'
   },
   'shades-of-purple-light': {
     id: 'shades-of-purple-light',
@@ -550,7 +607,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#7a5af8',
     accentColor: '#ff6bd5',
     darkMode: false,
-    backgroundColor: '#f7ebff'
+    backgroundColor: '#f7ebff',
+    textColor: '#3b2c59'
   },
   'shades-of-purple-dark': {
     id: 'shades-of-purple-dark',
@@ -559,7 +617,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#c792ff',
     accentColor: '#ff7ac6',
     darkMode: true,
-    backgroundColor: '#1a102b'
+    backgroundColor: '#1a102b',
+    textColor: '#f5f0ff'
   },
   'solarized-light': {
     id: 'solarized-light',
@@ -568,7 +627,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#268bd2',
     accentColor: '#d33682',
     darkMode: false,
-    backgroundColor: '#fdf6e3'
+    backgroundColor: '#fdf6e3',
+    textColor: '#586e75'
   },
   'solarized-dark': {
     id: 'solarized-dark',
@@ -577,7 +637,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#6c71c4',
     accentColor: '#d33682',
     darkMode: true,
-    backgroundColor: '#002b36'
+    backgroundColor: '#002b36',
+    textColor: '#93a1a1'
   },
   'synthwave-84-light': {
     id: 'synthwave-84-light',
@@ -586,7 +647,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#00bcd4',
     accentColor: '#9c27b0',
     darkMode: false,
-    backgroundColor: '#fafafa'
+    backgroundColor: '#fafafa',
+    textColor: '#262335'
   },
   'synthwave-84-dark': {
     id: 'synthwave-84-dark',
@@ -595,7 +657,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#36f9f6',
     accentColor: '#b084eb',
     darkMode: true,
-    backgroundColor: '#262335'
+    backgroundColor: '#262335',
+    textColor: '#ffffff'
   },
   'tokyonight-light': {
     id: 'tokyonight-light',
@@ -604,7 +667,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#2e7de9',
     accentColor: '#b15c00',
     darkMode: false,
-    backgroundColor: '#e1e2e7'
+    backgroundColor: '#e1e2e7',
+    textColor: '#273153'
   },
   'tokyonight-dark': {
     id: 'tokyonight-dark',
@@ -613,7 +677,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#7aa2f7',
     accentColor: '#ff9e64',
     darkMode: true,
-    backgroundColor: '#1a1b26'
+    backgroundColor: '#1a1b26',
+    textColor: '#c0caf5'
   },
   'vercel-light': {
     id: 'vercel-light',
@@ -622,7 +687,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#0070F3',
     accentColor: '#8E4EC6',
     darkMode: false,
-    backgroundColor: '#FFFFFF'
+    backgroundColor: '#FFFFFF',
+    textColor: '#171717'
   },
   'vercel-dark': {
     id: 'vercel-dark',
@@ -631,7 +697,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#0070F3',
     accentColor: '#8E4EC6',
     darkMode: true,
-    backgroundColor: '#000000'
+    backgroundColor: '#000000',
+    textColor: '#EDEDED'
   },
   'vesper-light': {
     id: 'vesper-light',
@@ -640,7 +707,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#FFC799',
     accentColor: '#B30000',
     darkMode: false,
-    backgroundColor: '#F0F0F0'
+    backgroundColor: '#F0F0F0',
+    textColor: '#101010'
   },
   'vesper-dark': {
     id: 'vesper-dark',
@@ -649,7 +717,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#FFC799',
     accentColor: '#FF8080',
     darkMode: true,
-    backgroundColor: '#101010'
+    backgroundColor: '#101010',
+    textColor: '#FFF'
   },
   'zenburn-light': {
     id: 'zenburn-light',
@@ -658,7 +727,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#5f7f8f',
     accentColor: '#5f8f8f',
     darkMode: false,
-    backgroundColor: '#ffffef'
+    backgroundColor: '#ffffef',
+    textColor: '#3f3f3f'
   },
   'zenburn-dark': {
     id: 'zenburn-dark',
@@ -667,7 +737,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#8cd0d3',
     accentColor: '#93e0e3',
     darkMode: true,
-    backgroundColor: '#3f3f3f'
+    backgroundColor: '#3f3f3f',
+    textColor: '#dcdccc'
   },
   'oc-2-secondary-opencode-light': {
     id: 'oc-2-secondary-opencode-light',
@@ -676,7 +747,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#dcde8d',
     accentColor: '#dcde8d',
     darkMode: false,
-    backgroundColor: '#f7f7f7'
+    backgroundColor: '#f7f7f7',
+    textColor: '#171311'
   },
   'oc-2-secondary-opencode-dark': {
     id: 'oc-2-secondary-opencode-dark',
@@ -685,7 +757,8 @@ export const BUILT_IN_THEMES: Record<string, Theme> = {
     primaryColor: '#fab283',
     accentColor: '#fab283',
     darkMode: true,
-    backgroundColor: '#1C1C1C'
+    backgroundColor: '#1C1C1C',
+    textColor: '#EDEDED'
   }
 };
 

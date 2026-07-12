@@ -41,7 +41,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ state }) => {
         <Box flexDirection="column" marginY={0.2} paddingLeft={1}>
           <Box flexDirection="row">
             <Text color={theme.accentColor} bold>Model: </Text>
-            <Text color="white">{modelDisplay.length > 30 ? modelDisplay.slice(0, 27) + '...' : modelDisplay}</Text>
+            <Text>{modelDisplay.length > 30 ? modelDisplay.slice(0, 27) + '...' : modelDisplay}</Text>
           </Box>
           <Box flexDirection="row">
             <Text color={theme.accentColor} bold>Path : </Text>
@@ -59,15 +59,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ state }) => {
       <Box flexDirection="column" borderStyle="double" borderColor={theme.primaryColor} padding={1} marginY={1}>
         <Box flexDirection="row">
           <Text color={theme.accentColor} bold>Current Provider : </Text>
-          <Text color="white">{providerDisplay}</Text>
+          <Text>{providerDisplay}</Text>
         </Box>
         <Box flexDirection="row">
           <Text color={theme.accentColor} bold>Current Model    : </Text>
-          <Text color="white">{modelDisplay}</Text>
+          <Text>{modelDisplay}</Text>
         </Box>
         <Box flexDirection="row">
           <Text color={theme.accentColor} bold>Active Workspace : </Text>
-          <Text color="white">{state.workspacePath}</Text>
+          <Text>{state.workspacePath}</Text>
         </Box>
       </Box>
 

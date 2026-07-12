@@ -54,7 +54,7 @@ const renderPromptPreview = (text: string) => {
     const previewText = firstLine.length > 30 ? firstLine.slice(0, 30) + '...' : firstLine;
     return (
       <Text color="cyan" bold>
-        [pasted text: <Text color="white" italic>"{previewText}"</Text> | +{linesCount - 1} lines, {charCount} chars]
+        [pasted text: <Text italic>"{previewText}"</Text> | +{linesCount - 1} lines, {charCount} chars]
       </Text>
     );
   }
@@ -109,13 +109,19 @@ export const App: React.FC = () => {
   } | null>(null);
 
   useEffect(() => {
-    if (theme && theme.backgroundColor) {
-      process.stdout.write(`\x1b]11;${theme.backgroundColor}\x07`);
+    if (theme) {
+      if (theme.backgroundColor) {
+        process.stdout.write(`\x1b]11;${theme.backgroundColor}\x07`);
+      }
+      if (theme.textColor) {
+        process.stdout.write(`\x1b]10;${theme.textColor}\x07`);
+      }
     }
-  }, [theme.id, theme.backgroundColor]);
+  }, [theme.id, theme.backgroundColor, theme.textColor]);
 
   useEffect(() => {
     const handleExit = () => {
+      process.stdout.write('\x1b]110\x07');
       process.stdout.write('\x1b]111\x07');
     };
     process.on('exit', handleExit);

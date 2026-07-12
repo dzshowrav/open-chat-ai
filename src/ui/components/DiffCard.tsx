@@ -319,8 +319,8 @@ export const DiffCard: React.FC<DiffCardProps> = ({
 
         {/* Path display */}
         <Box flexGrow={1} flexDirection="row">
-          <Text color="#8e9aa8">{shortDir}</Text>
-          <Text color="#f9fafb" bold>{fileName}</Text>
+          <Text color="gray">{shortDir}</Text>
+          <Text color={theme.primaryColor} bold>{fileName}</Text>
         </Box>
 
         {/* Language badge */}

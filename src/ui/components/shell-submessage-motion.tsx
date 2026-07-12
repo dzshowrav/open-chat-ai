@@ -28,14 +28,14 @@ export const ShellSubmessageMotion: React.FC<ShellMotionProps> = ({ output, isAc
   }, [lines.length]);
 
   if (lines.length === 0) {
-    return <Text color="#8e9aa8">No output returned.</Text>;
+    return <Text color="gray">No output returned.</Text>;
   }
 
   return (
     <Box flexDirection="column" paddingLeft={1} borderStyle="single" borderTop={false} borderRight={false} borderBottom={false} borderColor="#4c566a">
       {lines.slice(0, visibleLines).map((line, idx) => (
         <Box key={`shell_${idx}`}>
-          <Text color="#abb2bf">{line}</Text>
+          <Text >{line}</Text>
         </Box>
       ))}
       {visibleLines < lines.length && (

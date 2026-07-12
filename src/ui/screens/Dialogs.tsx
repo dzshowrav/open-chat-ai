@@ -92,10 +92,10 @@ export const ProviderListDialog: React.FC<ProviderListDialogProps> = ({ provider
           
           return (
             <Box key={provider.id} paddingX={1} justifyContent="space-between">
-              <Text color={isSelected ? 'black' : 'white'} bold={isSelected} backgroundColor={bg}>
+              <Text color={isSelected ? 'black' : undefined} bold={isSelected} backgroundColor={bg}>
                 ● {provider.name}
               </Text>
-              <Text color={isSelected ? 'black' : '#8e9aa8'} backgroundColor={bg}>
+              <Text color={isSelected ? 'black' : 'gray'} backgroundColor={bg}>
                 {provider.base_url}
               </Text>
             </Box>
@@ -455,8 +455,8 @@ export const ModelSwitcherDialog: React.FC<ModelSwitcherDialogProps> = ({ models
           
           return (
             <Box key={model.id} paddingX={1} justifyContent="space-between">
-              <Text color={isSelected ? 'black' : 'white'} bold={isSelected} backgroundColor={bg}>
-                ● {model.display_name} <Text color={isSelected ? 'black' : '#8e9aa8'} backgroundColor={bg}>({model.model_id.slice(0, 15)})</Text>
+              <Text color={isSelected ? 'black' : undefined} bold={isSelected} backgroundColor={bg}>
+                ● {model.display_name} <Text color={isSelected ? 'black' : 'gray'} backgroundColor={bg}>({model.model_id.slice(0, 15)})</Text>
               </Text>
               <Text color={isSelected ? 'black' : theme.accentColor} backgroundColor={bg}>
                 {model.provider_name.slice(0, 15)}
@@ -581,7 +581,7 @@ export const PermissionsPromptDialog: React.FC<PermissionsPromptDialogProps> = (
       
       <Box flexDirection="column" marginY={0}>
         <Text color="cyan" bold>Tool: {toolName}</Text>
-        <Text color="#8e9aa8">
+        <Text color="gray">
           Args: {JSON.stringify(args).length > 80 ? JSON.stringify(args).substring(0, 80) + '...' : JSON.stringify(args)}
         </Text>
       </Box>
@@ -665,7 +665,7 @@ export const AgentSwitcherDialog: React.FC<AgentSwitcherDialogProps> = ({ agents
           
           return (
             <Box key={agent.id} paddingX={1} justifyContent="space-between">
-              <Text color={isSelected ? 'black' : 'white'} bold={isSelected} backgroundColor={bg}>
+              <Text color={isSelected ? 'black' : undefined} bold={isSelected} backgroundColor={bg}>
                 {isActive ? '● ' : '  '} {agent.name}
               </Text>
               <Text color={isSelected ? 'black' : 'gray'} backgroundColor={bg}>
@@ -741,7 +741,7 @@ export const HistorySwitcherDialog: React.FC<HistorySwitcherDialogProps> = ({ se
           
           return (
             <Box key={session.id} paddingX={1} justifyContent="space-between">
-              <Text color={isSelected ? 'black' : 'white'} bold={isSelected} backgroundColor={bg}>
+              <Text color={isSelected ? 'black' : undefined} bold={isSelected} backgroundColor={bg}>
                 {"\u{F0B79} "}{(session.title || `Session #${session.id}`).slice(0, 22)}
               </Text>
               <Text color={isSelected ? 'black' : 'gray'} backgroundColor={bg}>
@@ -810,14 +810,14 @@ export const SkillsListDialog: React.FC<SkillsListDialogProps> = ({ skills, onCl
           const realIdx = viewStart + idx;
           const isSelected = realIdx === selectedIndex;
           return (
-            <Text key={skill.id} color={isSelected ? 'black' : 'white'} backgroundColor={isSelected ? theme.primaryColor : undefined} bold={isSelected}>
+            <Text key={skill.id} color={isSelected ? 'black' : undefined} backgroundColor={isSelected ? theme.primaryColor : undefined} bold={isSelected}>
               {isSelected ? '›' : ' '} {"\u{F03D6} "}{skill.name}
             </Text>
           );
         })}
         {skills.length > VP && (
           <Box justifyContent="center" marginTop={0.2}>
-            <Text color="#8e9aa8">{`-- [${selectedIndex + 1}/${skills.length}] --`}</Text>
+            <Text color="gray">{`-- [${selectedIndex + 1}/${skills.length}] --`}</Text>
           </Box>
         )}
       </Box>
@@ -896,7 +896,7 @@ export const McpListDialog: React.FC<McpListDialogProps> = ({ servers, onClose }
           return (
             <Box key={server.id} paddingX={1} justifyContent="space-between">
               <Box flexDirection="row">
-                <Text color={isSelected ? 'black' : 'white'} bold={isSelected} backgroundColor={isSelected ? theme.primaryColor : undefined}>
+                <Text color={isSelected ? 'black' : undefined} bold={isSelected} backgroundColor={isSelected ? theme.primaryColor : undefined}>
                   {isSelected ? '› ' : '  '}{"\u{F0C71} "}{server.name}{' '}
                 </Text>
                 <Text color={isSelected ? 'black' : 'gray'} backgroundColor={isSelected ? theme.primaryColor : undefined}>({server.command})</Text>
@@ -1035,7 +1035,7 @@ export const ToolsListDialog: React.FC<ToolsListDialogProps> = ({ onClose }) => 
             return (
               <Box key={schema.function.name} flexDirection="row" justifyContent="space-between">
                 <Text
-                  color={isSelected ? 'black' : 'white'}
+                  color={isSelected ? 'black' : undefined}
                   backgroundColor={isSelected ? theme.primaryColor : undefined}
                   bold={isSelected}
                 >
@@ -1049,7 +1049,7 @@ export const ToolsListDialog: React.FC<ToolsListDialogProps> = ({ onClose }) => 
           })}
           {filteredSchemas.length > VP && (
             <Box justifyContent="center">
-              <Text color="#8e9aa8">
+              <Text color="gray">
                 {`-- [${selectedIndex + 1}/${filteredSchemas.length}] --`}
               </Text>
             </Box>
@@ -1135,7 +1135,7 @@ export const ToolPermissionsDialog: React.FC<ToolPermissionsDialogProps> = ({ on
         const showScrollDown = viewStart + VP < schemas.length;
         return (
           <Box flexDirection="column" marginY={0.5}>
-            {showScrollUp && <Text color="#8e9aa8">  ↑ {viewStart} more above</Text>}
+            {showScrollUp && <Text color="gray">  ↑ {viewStart} more above</Text>}
             {visibleSchemas.map((schema, vidx) => {
               const realIdx = viewStart + vidx;
               const isSelected = realIdx === selectedIndex;
@@ -1144,7 +1144,7 @@ export const ToolPermissionsDialog: React.FC<ToolPermissionsDialogProps> = ({ on
               return (
                 <Box key={schema.function.name} flexDirection="row" justifyContent="space-between" paddingX={1}>
                   <Text
-                    color={isSelected ? 'black' : 'white'}
+                    color={isSelected ? 'black' : undefined}
                     backgroundColor={isSelected ? theme.primaryColor : undefined}
                     bold={isSelected}
                   >
@@ -1160,7 +1160,7 @@ export const ToolPermissionsDialog: React.FC<ToolPermissionsDialogProps> = ({ on
                 </Box>
               );
             })}
-            {showScrollDown && <Text color="#8e9aa8">  ↓ {schemas.length - viewStart - VP} more below</Text>}
+            {showScrollDown && <Text color="gray">  ↓ {schemas.length - viewStart - VP} more below</Text>}
           </Box>
         );
       })()}
@@ -1207,7 +1207,7 @@ export const QuestionDialog: React.FC<QuestionDialogProps> = ({ question, option
     <Box flexDirection="column" borderStyle="round" borderColor={theme.primaryColor} padding={1} width={60}>
       <Text color={theme.accentColor} bold>{"\u{F042C} "}Interactive Question</Text>
       <Box marginY={0.5} paddingX={1}>
-        <Text color="white" bold>{question}</Text>
+        <Text bold>{question}</Text>
       </Box>
       
       <Box flexDirection="column" marginY={0.5} borderStyle="single" borderColor="gray" paddingX={1}>
@@ -1217,7 +1217,7 @@ export const QuestionDialog: React.FC<QuestionDialogProps> = ({ question, option
           
           return (
             <Box key={idx} paddingX={1}>
-              <Text color={isSelected ? 'black' : 'white'} bold={isSelected} backgroundColor={bg}>
+              <Text color={isSelected ? 'black' : undefined} bold={isSelected} backgroundColor={bg}>
                 {isSelected ? '› ' : '  '}{option}
               </Text>
             </Box>
@@ -1395,7 +1395,7 @@ export const ThemeSwitcherDialog: React.FC<ThemeSwitcherDialogProps> = ({ onPrev
           return (
             <Box key={id} flexDirection="row" justifyContent="space-between">
               <Text
-                color={isSelected ? 'black' : 'white'}
+                color={isSelected ? 'black' : undefined}
                 backgroundColor={isSelected ? currentTheme.primaryColor : undefined}
                 bold={isSelected}
               >
@@ -1423,9 +1423,9 @@ export const ThemeSwitcherDialog: React.FC<ThemeSwitcherDialogProps> = ({ onPrev
             <Text color="gray" italic>by {selectedTheme.author}</Text>
           </Box>
           <Box flexDirection="row" marginY={0.2}>
-            <Text color="white">Primary: </Text>
+            <Text>Primary: </Text>
             <Text color={selectedTheme.primaryColor} bold>{selectedTheme.primaryColor} ████</Text>
-            <Text color="white">  Accent: </Text>
+            <Text>  Accent: </Text>
             <Text color={selectedTheme.accentColor} bold>{selectedTheme.accentColor} ████</Text>
           </Box>
         </Box>

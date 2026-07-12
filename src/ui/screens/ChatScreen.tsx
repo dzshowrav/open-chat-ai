@@ -188,7 +188,7 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Messa
               <Text color="#7aa2f7" bold>● Thinking Process</Text>
             </Box>
             <Box marginLeft={1} flexShrink={1} flexGrow={1}>
-              <Text color="#a9b1d6" italic wrap="wrap">{msg.reasoning_content}</Text>
+              <Text color="gray" italic wrap="wrap">{msg.reasoning_content}</Text>
             </Box>
           </Box>
         )}
@@ -333,7 +333,7 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Messa
         {!isError && msg.content && (
           <Box marginLeft={1} marginY={isMobile ? 0.1 : 0.2}>
             {isVerboseTool ? (
-              <Text color="#8e9aa8">  ⎿  Read {linesCount} lines (Context loaded in background)</Text>
+              <Text color="gray">  ⎿  Read {linesCount} lines (Context loaded in background)</Text>
             ) : (
               <ShellSubmessageMotion output={msg.content} isActive={isActive} />
             )}
@@ -370,7 +370,7 @@ const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: st
             <Text color="#7aa2f7" bold>● Thinking Process</Text>
           </Box>
           <Box marginLeft={1}>
-            <Text color="#a9b1d6" italic>{reasoning}</Text>
+            <Text color="gray" italic>{reasoning}</Text>
           </Box>
         </Box>
       )}

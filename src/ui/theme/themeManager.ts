@@ -39,9 +39,17 @@ function restoreTermuxColors() {
       exec('/data/data/com.termux/files/usr/bin/termux-reload-settings');
     } else if (fs.existsSync(colorsPath)) {
       let content = fs.readFileSync(colorsPath, 'utf8');
+      let changed = false;
       if (content.includes('background=')) {
-        content = content.replace(/^background=.*$/m, '').trim();
-        fs.writeFileSync(colorsPath, content, 'utf8');
+        content = content.replace(/^background=.*$/m, '');
+        changed = true;
+      }
+      if (content.includes('foreground=')) {
+        content = content.replace(/^foreground=.*$/m, '');
+        changed = true;
+      }
+      if (changed) {
+        fs.writeFileSync(colorsPath, content.trim(), 'utf8');
         exec('/data/data/com.termux/files/usr/bin/termux-reload-settings');
       }
     }
@@ -50,7 +58,7 @@ function restoreTermuxColors() {
   }
 }
 
-function setTermuxBackground(color: string) {
+function setTermuxColors(backgroundColor: string, textColor: string) {
   try {
     const isTermux = process.env.TERMUX_VERSION || fs.existsSync('/data/data/com.termux');
     if (!isTermux) return;
@@ -70,10 +78,18 @@ function setTermuxBackground(color: string) {
       content = fs.readFileSync(colorsPath, 'utf8');
     }
 
+    // Replace background
     if (content.includes('background=')) {
-      content = content.replace(/^background=.*$/m, `background=${color}`);
+      content = content.replace(/^background=.*$/m, `background=${backgroundColor}`);
     } else {
-      content += (content.endsWith('\n') || content === '' ? '' : '\n') + `background=${color}\n`;
+      content += (content.endsWith('\n') || content === '' ? '' : '\n') + `background=${backgroundColor}\n`;
+    }
+
+    // Replace foreground
+    if (content.includes('foreground=')) {
+      content = content.replace(/^foreground=.*$/m, `foreground=${textColor}`);
+    } else {
+      content += (content.endsWith('\n') || content === '' ? '' : '\n') + `foreground=${textColor}\n`;
     }
 
     fs.writeFileSync(colorsPath, content, 'utf8');
@@ -95,8 +111,8 @@ export class ThemeManager {
     if (!this.isInitialized) {
       this.isInitialized = true;
       backupTermuxColors();
-      if (theme && theme.backgroundColor) {
-        setTermuxBackground(theme.backgroundColor);
+      if (theme && theme.backgroundColor && theme.textColor) {
+        setTermuxColors(theme.backgroundColor, theme.textColor);
       }
     }
 
@@ -107,8 +123,8 @@ export class ThemeManager {
     if (BUILT_IN_THEMES[themeId]) {
       this.settingRepo.setSetting('theme', { themeId, wordWrap: true });
       const theme = BUILT_IN_THEMES[themeId];
-      if (theme && theme.backgroundColor) {
-        setTermuxBackground(theme.backgroundColor);
+      if (theme && theme.backgroundColor && theme.textColor) {
+        setTermuxColors(theme.backgroundColor, theme.textColor);
       }
     }
   }

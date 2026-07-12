@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Text, Static } from 'ink';
+import { Box, Text, Static, useStdout } from 'ink';
 import { eventBus } from '../../core/events.js';
 import { Message } from '../../types/index.js';
 import { themeManager } from '../theme/themeManager.js';
@@ -160,14 +160,14 @@ export const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({ startTime,
   );
 };
 
-const MessageItem = ({ msg, idx, isActive, allMessages }: { msg: Message, idx: number, isActive: boolean, allMessages: Message[] }) => {
+const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Message, idx: number, isActive: boolean, allMessages: Message[], isMobile: boolean }) => {
   const theme = themeManager.getCurrentTheme();
 
   if (msg.role === 'system') return null;
 
   if (msg.role === 'user') {
     return (
-      <Box key={idx} flexDirection="row" marginY={0.5}>
+      <Box key={idx} flexDirection="row" marginY={isMobile ? 0.1 : 0.5}>
         <Text color={theme.primaryColor} bold>&gt; </Text>
         <Text color={theme.primaryColor}>{msg.content}</Text>
       </Box>
@@ -177,9 +177,9 @@ const MessageItem = ({ msg, idx, isActive, allMessages }: { msg: Message, idx: n
   if (msg.role === 'assistant') {
     const toolCalls = getToolCallsArray(msg.tool_calls);
     return (
-      <Box key={idx} flexDirection="column" marginY={0.5}>
+      <Box key={idx} flexDirection="column" marginY={isMobile ? 0.1 : 0.5}>
         {msg.reasoning_content && (
-          <Box flexDirection="column" marginY={0.2} marginLeft={1}>
+          <Box flexDirection="column" marginY={isMobile ? 0.1 : 0.2} marginLeft={1}>
             <Box flexDirection="row">
               <Text color="#7aa2f7" bold>● Thinking Process</Text>
             </Box>
@@ -206,7 +206,7 @@ const MessageItem = ({ msg, idx, isActive, allMessages }: { msg: Message, idx: n
         )}
         
         {toolCalls.length > 0 && (
-          <Box flexDirection="column" marginLeft={1} marginY={0.2}>
+          <Box flexDirection="column" marginLeft={1} marginY={isMobile ? 0.1 : 0.2}>
             {toolCalls.map((call: any, cIdx: number) => {
               const funcName = call.function?.name || 'unknown';
               let argsObj: any = {};
@@ -315,15 +315,15 @@ const MessageItem = ({ msg, idx, isActive, allMessages }: { msg: Message, idx: n
     const isVerboseTool = ['read', 'read_file'].includes(baseToolName);
     
     return (
-      <Box key={idx} flexDirection="column" marginY={0.2} marginLeft={1}>
+      <Box key={idx} flexDirection="column" marginY={isMobile ? 0.1 : 0.2} marginLeft={1}>
         <ToolStatusTitle toolName={actualToolName} status={isError ? 'error' : 'success'} />
         {isError && msg.content && (
-          <Box marginTop={0.5}>
+          <Box marginTop={isMobile ? 0.2 : 0.5}>
             <ToolErrorCard errorContent={msg.content} />
           </Box>
         )}
         {!isError && msg.content && (
-          <Box marginLeft={1} marginY={0.2}>
+          <Box marginLeft={1} marginY={isMobile ? 0.1 : 0.2}>
             {isVerboseTool ? (
               <Text color="#8e9aa8">  ⎿  Read {linesCount} lines (Context loaded in background)</Text>
             ) : (
@@ -338,7 +338,7 @@ const MessageItem = ({ msg, idx, isActive, allMessages }: { msg: Message, idx: n
   return null;
 };
 
-const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: string | null }> = ({ startTime, activeToolName }) => {
+const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: string | null; isMobile: boolean }> = ({ startTime, activeToolName, isMobile }) => {
   const theme = themeManager.getCurrentTheme();
   const [text, setText] = useState('');
   const [reasoning, setReasoning] = useState('');
@@ -355,9 +355,9 @@ const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: st
   }, []);
 
   return (
-    <Box flexDirection="column" marginY={0.5}>
+    <Box flexDirection="column" marginY={isMobile ? 0.1 : 0.5}>
       {reasoning && (
-        <Box flexDirection="column" marginY={0.2} marginLeft={1}>
+        <Box flexDirection="column" marginY={isMobile ? 0.1 : 0.2} marginLeft={1}>
           <Box flexDirection="row">
             <Text color="#7aa2f7" bold>● Thinking Process</Text>
           </Box>
@@ -379,15 +379,18 @@ const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: st
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({ messages, state }) => {
   const theme = themeManager.getCurrentTheme();
+  const { stdout } = useStdout();
+  const rows = stdout?.rows || 24;
+  const isMobile = rows < 18;
   
   return (
     <Box flexDirection="column" paddingX={0} marginY={0} width="100%">
       <Static items={messages}>
-        {(msg, idx) => <MessageItem key={idx} msg={msg} idx={idx} isActive={false} allMessages={messages} />}
+        {(msg, idx) => <MessageItem key={idx} msg={msg} idx={idx} isActive={false} allMessages={messages} isMobile={isMobile} />}
       </Static>
 
       {(state.isStreaming || state.activeToolName) && (
-        <StreamingResponse startTime={state.streamingStartTime} activeToolName={state.activeToolName} />
+        <StreamingResponse startTime={state.streamingStartTime} activeToolName={state.activeToolName} isMobile={isMobile} />
       )}
     </Box>
   );

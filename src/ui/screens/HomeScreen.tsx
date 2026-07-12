@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Text } from 'ink';
+import { Box, Text, useStdout } from 'ink';
 import { Logo } from '../components/Logo.js';
 import { themeManager } from '../theme/themeManager.js';
 import { AppState } from '../../core/state.js';
@@ -19,6 +19,9 @@ const TIPS = [
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ state }) => {
   const theme = themeManager.getCurrentTheme();
+  const { stdout } = useStdout();
+  const rows = stdout?.rows || 24;
+  const isMobile = rows < 18;
 
   // Get active tip based on minutes
   const tipIndex = new Date().getMinutes() % TIPS.length;
@@ -26,6 +29,28 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ state }) => {
 
   const modelDisplay = state.activeModelId || 'No model loaded (run /add model)';
   const providerDisplay = state.activeProviderId ? 'Connected' : 'No provider configured (run /provider api)';
+  const workspaceName = state.workspacePath ? state.workspacePath.split(/[/\\]/).pop() || state.workspacePath : 'none';
+
+  if (isMobile) {
+    return (
+      <Box flexDirection="column" paddingX={1} marginY={0} width="100%">
+        <Box flexDirection="row" justifyContent="space-between">
+          <Text color={theme.primaryColor} bold>⚡ OpenChat AI</Text>
+          <Text color="gray">Type / for commands</Text>
+        </Box>
+        <Box flexDirection="column" marginY={0.2} paddingLeft={1}>
+          <Box flexDirection="row">
+            <Text color={theme.accentColor} bold>Model: </Text>
+            <Text color="white">{modelDisplay.length > 30 ? modelDisplay.slice(0, 27) + '...' : modelDisplay}</Text>
+          </Box>
+          <Box flexDirection="row">
+            <Text color={theme.accentColor} bold>Path : </Text>
+            <Text color="gray">{workspaceName}</Text>
+          </Box>
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box flexDirection="column" paddingX={0} marginY={1}>

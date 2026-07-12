@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Text, useInput, useApp } from 'ink';
+import { Box, Text, useInput, useApp, useStdout } from 'ink';
 import { stateManager, AppState } from '../core/state.js';
 import { AppEngine } from '../core/engine.js';
 import { eventBus } from '../core/events.js';
@@ -65,6 +65,9 @@ const renderPromptPreview = (text: string) => {
 export const App: React.FC = () => {
   const { exit } = useApp();
   const theme = themeManager.getCurrentTheme();
+  const { stdout } = useStdout();
+  const rows = stdout?.rows || 24;
+  const isMobile = rows < 18;
 
   const activeAbortController = React.useRef<AbortController | null>(null);
   const lastEscPress = React.useRef<number>(0);
@@ -885,7 +888,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <Box flexDirection="column" width="100%" padding={1}>
+    <Box flexDirection="column" width="100%" paddingX={isMobile ? 0 : 1} paddingY={isMobile ? 0 : 1}>
       <Box flexDirection="column" flexGrow={1}>
         {state.currentScreen === 'home' && !showCommandPalette && activeDialog === 'none' && <HomeScreen state={state} />}
         {state.currentScreen === 'chat' && <ChatScreen key={`chat-session-${state.activeSessionId || 'default'}`} messages={messages} state={state} />}
@@ -1098,10 +1101,10 @@ export const App: React.FC = () => {
 
       {/* Input prompt area */}
       <Box flexDirection="column">
-        {((process.stdout.rows || 24) < 18) ? (
+        {isMobile ? (
           <Box flexDirection="column">
-            <Text color="gray">{"─".repeat(process.stdout.columns || 80)}</Text>
-            <Box flexDirection="row" paddingX={1} marginY={0.2}>
+            <Text color="gray">{"─".repeat(stdout?.columns || 80)}</Text>
+            <Box flexDirection="row" paddingX={1} marginY={0}>
               <Text color={theme.accentColor} bold>&gt; </Text>
               {renderPromptPreview(prompt)}
               <Text color="cyan">█</Text>

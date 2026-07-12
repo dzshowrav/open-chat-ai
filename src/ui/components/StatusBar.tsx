@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Text } from 'ink';
+import { Box, Text, useStdout } from 'ink';
 import { AppState } from '../../core/state.js';
 import { themeManager } from '../theme/themeManager.js';
 import { APP_VERSION } from '../../core/constants.js';
@@ -11,6 +11,8 @@ interface StatusBarProps {
 
 export const StatusBar: React.FC<StatusBarProps> = ({ state }) => {
   const theme = themeManager.getCurrentTheme();
+  const { stdout } = useStdout();
+  const rows = stdout?.rows || 24;
   
   // Get short workspace name
   const workspaceName = state.workspacePath 
@@ -21,7 +23,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state }) => {
   const modelDisplay = state.activeModelId || 'No Model';
   const toolDisplay = state.activeToolName ? ` \u{F013} ${state.activeToolName}...` : '';
 
-  const isMobile = (process.stdout.rows || 24) < 18;
+  const isMobile = rows < 18;
 
   if (isMobile) {
     return (

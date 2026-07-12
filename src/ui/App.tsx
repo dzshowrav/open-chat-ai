@@ -250,6 +250,18 @@ export const App: React.FC = () => {
       return;
     }
 
+    if (key.ctrl && input === 'a') {
+      // Ctrl+A — cursor to start
+      setCursorPos(0);
+      return;
+    }
+
+    if (key.ctrl && input === 'e') {
+      // Ctrl+E — cursor to end
+      setCursorPos(cursorPromptLen.current);
+      return;
+    }
+
     if (key.ctrl && input === 'u') {
       setPrompt('');
       setCursorPos(0);

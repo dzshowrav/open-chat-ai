@@ -26,7 +26,7 @@ async function main() {
 
   // Hook start event to boot the Ink UI render loop
   eventBus.on('app:start', () => {
-    render(React.createElement(App));
+    render(React.createElement(App), { patchConsole: false, exitOnCtrlC: false });
   });
 
   // Start Core Engine

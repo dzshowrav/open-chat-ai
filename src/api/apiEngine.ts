@@ -144,6 +144,9 @@ export class ApiEngine {
     let fullReasoning = '';
     let accumulatedToolCalls: any[] = [];
 
+    // Track which tool call indices have been started (for emitting start event only once)
+    const toolCallStarted = new Set<number>();
+
     // Batching to prevent terminal flicker
     let batchedContentToken = '';
     let batchedReasoningToken = '';
@@ -201,8 +204,19 @@ export class ApiEngine {
                   if (tc.function?.name) {
                     accumulatedToolCalls[idx].function.name = tc.function.name;
                   }
+
+                  // Emit tool_call_start event when this tool call index first appears
+                  if (!toolCallStarted.has(idx)) {
+                    toolCallStarted.add(idx);
+                    const toolName = tc.function?.name || accumulatedToolCalls[idx].function.name || 'unknown';
+                    const toolId = tc.id || accumulatedToolCalls[idx].id || '';
+                    eventBus.emit('stream:tool_call_start', { index: idx, toolName, toolId });
+                  }
+
                   if (tc.function?.arguments) {
                     accumulatedToolCalls[idx].function.arguments += tc.function.arguments;
+                    // Emit delta event with the new partial JSON chunk
+                    eventBus.emit('stream:tool_call_delta', { index: idx, partialArgs: tc.function.arguments });
                   }
                 }
               }
@@ -224,6 +238,23 @@ export class ApiEngine {
       reader.releaseLock();
       if (batchedContentToken || batchedReasoningToken) {
         eventBus.emit('stream:token', { token: batchedContentToken, reasoningToken: batchedReasoningToken });
+      }
+
+      // Emit tool_call_end for each accumulated tool call when stream finishes
+      const validToolCalls = accumulatedToolCalls.filter(x => x !== null && x !== undefined);
+      for (const tc of validToolCalls) {
+        let argsObj: Record<string, any> = {};
+        try {
+          argsObj = JSON.parse(tc.function.arguments);
+        } catch {
+          argsObj = { raw: tc.function.arguments };
+        }
+        eventBus.emit('stream:tool_call_end', {
+          index: validToolCalls.indexOf(tc),
+          completeArgs: argsObj,
+          toolName: tc.function.name,
+          toolId: tc.id
+        });
       }
     }
 

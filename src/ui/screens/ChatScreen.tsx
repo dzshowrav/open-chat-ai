@@ -10,6 +10,7 @@ import { ToolStatusTitle } from '../components/tool-status-title.js';
 import { ToolErrorCard } from '../components/tool-error-card.js';
 import { ToolCountSummary } from '../components/tool-count-summary.js';
 import { ShellSubmessageMotion } from '../components/shell-submessage-motion.js';
+import { ToolCallStreamCard } from '../components/ToolCallStreamCard.js';
 import { SettingRepository } from '../../database/repositories/settingRepository.js';
 
 const settingRepo = new SettingRepository();
@@ -480,6 +481,9 @@ const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: st
           <ThinkingIndicator startTime={startTime} isActive={true} activeToolName={activeToolName} />
         </Box>
       )}
+
+      {/* Real-time tool call streaming cards */}
+      <ToolCallStreamCard />
     </Box>
   );
 };

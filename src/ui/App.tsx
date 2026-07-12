@@ -37,6 +37,7 @@ import { Message, Provider, Model, Agent, Session } from '../types/index.js';
 import { ApiEngine } from '../api/apiEngine.js';
 import { ContextBuilder } from '../core/contextBuilder.js';
 import { ToolManager } from '../tools/toolManager.js';
+import { executeToolCalls, buildApiMessages, getToolNiceName, getToolTargetDisplay } from '../core/contentBlocks.js';
 
 const renderPromptPreview = (text: string) => {
   if (!text) {
@@ -495,9 +496,118 @@ export const App: React.FC = () => {
     }
   };
 
-  // Live recursive agentic tool call loop
+  // ─────────────────────────────────────────────────────────
+  // Refactored Agentic Loop — uses contentBlocks.ts helpers
+  // Pattern inspired by Ivan Leo's article: clean content block
+  // lifecycle + recursive tool call chaining.
+  // ─────────────────────────────────────────────────────────
+
+  /**
+   * Execute one round of streaming: sends messages, processes stream,
+   * returns response with content + tool_calls.
+   */
+  const runChatStream = async (
+    provider: Provider,
+    modelString: string,
+    sessionId: number,
+    apiMessages: any[],
+    useStreaming: boolean
+  ): Promise<{ content: string; toolCalls: any[]; reasoning: string }> => {
+    const tools = ToolManager.getToolSchemas();
+    const controller = new AbortController();
+    activeAbortController.current = controller;
+
+    eventBus.emit('stream:started', { sessionId, model: modelString });
+
+    const response = await ApiEngine.chatCompletion({
+      provider,
+      model: modelString,
+      messages: apiMessages,
+      tools: tools.length > 0 ? tools : undefined,
+      stream: useStreaming,
+      signal: controller.signal
+    });
+
+    activeAbortController.current = null;
+
+    const content = response.content || '';
+    const toolCalls = (response.tool_calls || []).filter((tc: any) => tc !== null && tc !== undefined);
+    const reasoning = response.reasoning_content || '';
+
+    return { content, toolCalls, reasoning };
+  };
+
+  /**
+   * Recursive agentic tool call loop.
+   * 1. Runs a streaming chat completion
+   * 2. If tool calls → saves assistant msg, executes tools, saves results → recurses
+   * 3. If no tool calls → saves final response → done
+   */
+  const generateResponse = async (
+    sessionId: number,
+    provider: Provider,
+    modelString: string,
+    runCount: number = 0
+  ): Promise<void> => {
+    const maxRuns = 6;
+    if (runCount >= maxRuns) {
+      eventBus.emit('stream:finished', { fullText: '', tokensCount: 0 });
+      return;
+    }
+
+    const systemPrompt = ContextBuilder.buildSystemPrompt();
+    const dbMessages = sessionRepo.getMessages(sessionId);
+    const apiMessages = buildApiMessages(dbMessages, systemPrompt);
+    const useStreaming = state.isStreaming;
+
+    const { content, toolCalls, reasoning } = await runChatStream(
+      provider, modelString, sessionId, apiMessages, useStreaming
+    );
+
+    if (toolCalls.length > 0) {
+      // Save assistant message with tool calls
+      sessionRepo.addMessage({
+        session_id: sessionId,
+        role: 'assistant',
+        content: content || null,
+        reasoning_content: reasoning || null,
+        tool_calls: JSON.stringify(toolCalls)
+      });
+      setMessages(sessionRepo.getMessages(sessionId));
+
+      // Execute tools and save results
+      const toolResults = await executeToolCalls(toolCalls);
+      for (const tr of toolResults) {
+        sessionRepo.addMessage({
+          session_id: sessionId,
+          role: 'tool',
+          content: tr.content,
+          tool_call_id: tr.tool_call_id || ''
+        });
+      }
+      setMessages(sessionRepo.getMessages(sessionId));
+
+      // Recursively call generateResponse for the model to react to tool results
+      return generateResponse(sessionId, provider, modelString, runCount + 1);
+    }
+
+    // No tool calls — final text response
+    if (content || reasoning) {
+      sessionRepo.addMessage({
+        session_id: sessionId,
+        role: 'assistant',
+        content: content,
+        reasoning_content: reasoning || null
+      });
+      setMessages(sessionRepo.getMessages(sessionId));
+    }
+
+    eventBus.emit('stream:finished', { fullText: content, fullReasoning: reasoning, tokensCount: 0 });
+  };
+
+  // Entry point — starts the streaming session
   const triggerAiCompletion = async (sessionId: number, userText: string) => {
-    stateManager.setState({ isStreaming: true });
+    stateManager.setState({ isStreaming: true, streamingStartTime: Date.now() });
 
     try {
       const activeProviderId = state.activeProviderId;
@@ -514,143 +624,9 @@ export const App: React.FC = () => {
       const dbModel = modelRepo.listModels().find(m => m.model_id === activeModelId);
       const modelString = dbModel ? dbModel.model_id : activeModelId;
 
-      let runCount = 0;
-      const maxRuns = 6; // Safety recursion limit
-
-      while (runCount < maxRuns) {
-        runCount++;
-
-        // 1. Build dynamic context system prompt
-        const systemPrompt = ContextBuilder.buildSystemPrompt();
-
-        // 2. Fetch messages from DB
-        const dbMessages = sessionRepo.getMessages(sessionId);
-        
-        // 3. Compile messages for API payload
-        const apiMessages = [
-          { role: 'system', content: systemPrompt },
-          ...dbMessages.map(m => {
-            const msg: any = { role: m.role, content: m.content };
-            if (m.tool_calls) {
-              msg.tool_calls = typeof m.tool_calls === 'string' ? JSON.parse(m.tool_calls) : m.tool_calls;
-            }
-            if (m.tool_call_id) {
-              msg.tool_call_id = m.tool_call_id;
-            }
-            return msg;
-          })
-        ];
-
-        // 4. Gather registered tool schemas
-        const tools = ToolManager.getToolSchemas();
-
-        // 5. Notify streaming interface started
-        eventBus.emit('stream:started', { sessionId, model: modelString });
-
-        let accumulatedContent = '';
-        let accumulatedToolCalls: any[] = [];
-
-        // Fetch streaming configuration from setting repo / state
-        const useStreaming = state.isStreaming;
-
-        // Initialize AbortController for this request
-        const controller = new AbortController();
-        activeAbortController.current = controller;
-
-        // Run chat completion (handles both streaming token callbacks and tool results blocks)
-        const response = await ApiEngine.chatCompletion({
-          provider,
-          model: modelString,
-          messages: apiMessages,
-          tools: tools.length > 0 ? tools : undefined,
-          stream: useStreaming,
-          signal: controller.signal
-        });
-
-        activeAbortController.current = null;
-
-        accumulatedContent = response.content || '';
-        accumulatedToolCalls = response.tool_calls || [];
-        const accumulatedReasoning = response.reasoning_content || '';
-
-        accumulatedToolCalls = accumulatedToolCalls.filter(tc => tc !== null && tc !== undefined);
-
-        // 6. Handle agent action branches
-        if (accumulatedToolCalls.length > 0) {
-          // AI requested tool calls. Log assistant request to DB
-          sessionRepo.addMessage({
-            session_id: sessionId,
-            role: 'assistant',
-            content: accumulatedContent || null,
-            reasoning_content: accumulatedReasoning || null,
-            tool_calls: JSON.stringify(accumulatedToolCalls)
-          });
-
-          // Sync messages in the UI
-          setMessages(sessionRepo.getMessages(sessionId));
-
-          // Run each requested tool sequentially
-          for (const tc of accumulatedToolCalls) {
-            const toolName = tc.function.name;
-            let toolArgs = {};
-            try {
-              let parsed = tc.function.arguments ? JSON.parse(tc.function.arguments) : {};
-              if (typeof parsed === 'string') parsed = JSON.parse(parsed);
-              toolArgs = parsed;
-            } catch {
-              toolArgs = {};
-            }
-            
-            let niceName = toolName.replace(/_file|_process/g, '');
-            niceName = niceName.charAt(0).toUpperCase() + niceName.slice(1);
-            const targetStr = String((toolArgs as any).path || (toolArgs as any).url || (toolArgs as any).query || (toolArgs as any).command || '');
-            let activeTitle = niceName;
-            if (targetStr) {
-               const shortTarget = targetStr.length > 50 ? targetStr.slice(0, 20) + '...' + targetStr.slice(-25) : targetStr;
-               activeTitle = `${niceName}(${shortTarget})`;
-            }
-
-            eventBus.emit('tool:started', { toolName: activeTitle, args: toolArgs });
-            let toolOutput = '';
-            try {
-              const res = await ToolManager.executeTool(toolName, toolArgs);
-              toolOutput = typeof res === 'object' ? JSON.stringify(res, null, 2) : String(res);
-            } catch (err: any) {
-              toolOutput = `Error: ${err.message || String(err)}`;
-            }
-
-            // Save tool output as a tool-role message
-            sessionRepo.addMessage({
-              session_id: sessionId,
-              role: 'tool',
-              content: toolOutput,
-              tool_call_id: tc.id
-            });
-          }
-
-          // Sync UI history list
-          setMessages(sessionRepo.getMessages(sessionId));
-
-          // Continue back to loop for final response compilation
-          continue;
-        }
-
-        // Final text response received
-        if (accumulatedContent || accumulatedReasoning) {
-          sessionRepo.addMessage({
-            session_id: sessionId,
-            role: 'assistant',
-            content: accumulatedContent,
-            reasoning_content: accumulatedReasoning || null
-          });
-        }
-
-        eventBus.emit('stream:finished', { fullText: accumulatedContent, fullReasoning: accumulatedReasoning, tokensCount: 0 });
-        break;
-      }
+      await generateResponse(sessionId, provider, modelString);
     } catch (err: any) {
       if (err.name === 'AbortError' || err.message === 'The user aborted a request.' || err.message?.includes('aborted')) {
-        // Silently catch and consume user-triggered aborts
         eventBus.emit('stream:finished', { fullText: '', tokensCount: 0 });
         return;
       }

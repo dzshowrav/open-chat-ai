@@ -27,6 +27,11 @@ export interface AppEventPayloads {
   'stream:started': { sessionId: number; model: string };
   'stream:token': { token: string; reasoningToken?: string };
   'stream:finished': { fullText: string; fullReasoning?: string; tokensCount: number };
+
+  // Content block lifecycle events for real-time tool call streaming
+  'stream:tool_call_start': { index: number; toolName: string; toolId: string };
+  'stream:tool_call_delta': { index: number; partialArgs: string };
+  'stream:tool_call_end': { index: number; completeArgs: Record<string, any>; toolName: string; toolId: string };
   
   'workspace:changed': { path: string };
   'workspace:scanned': { path: string; fileCount: number };

@@ -97,6 +97,8 @@ export const App: React.FC = () => {
   const [cursorPos, setCursorPos] = useState(0); // cursor position in prompt
   const cursorPromptLen = useRef(0); // tracks prompt.length without stale closures
   cursorPromptLen.current = prompt.length;
+  const enterTimerRef = useRef<any>(null); // long-press Enter detection timer id
+  const enterCancelledRef = useRef(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -302,24 +304,40 @@ export const App: React.FC = () => {
     if (key.return) {
       if (key.shift || key.ctrl) {
         // Shift+Enter / Ctrl+Enter submits
+        if (enterTimerRef.current) {
+          clearTimeout(enterTimerRef.current);
+          enterTimerRef.current = null;
+        }
         handlePromptSubmit();
       } else if (key.meta) {
         // Alt+Enter / Option+Enter inserts newline
         setPrompt(prev => prev + '\n');
-      } else {
-        // Standard Enter
-        if (prompt.trim() === '') {
-          return;
+        // Cancel any pending submit timer from earlier plain Enter
+        if (enterTimerRef.current) {
+          clearTimeout(enterTimerRef.current);
+          enterTimerRef.current = null;
+          enterCancelledRef.current = true;
         }
+      } else {
+        // Standard Enter — long-press detection:
+        //   Single quick tap → submit after 200ms debounce
+        //   Hold (auto-repeat kicks in within 200ms) → insert newline
+        const timerPending = enterTimerRef.current !== null;
 
-        const hasNewlines = prompt.includes('\n');
-        const endsWithNewline = prompt.endsWith('\n');
-
-        // If it's a slash command, or a single-line message, submit immediately.
-        // If it's already a multi-line message, Enter adds a newline, and a second Enter submits.
-        if (prompt.startsWith('/') || !hasNewlines || endsWithNewline) {
-          handlePromptSubmit();
+        if (!timerPending) {
+          // First press — schedule submit after a short debounce
+          enterCancelledRef.current = false;
+          enterTimerRef.current = setTimeout(() => {
+            enterTimerRef.current = null;
+            if (!enterCancelledRef.current && prompt.trim()) {
+              handlePromptSubmit();
+            }
+          }, 180);
         } else {
+          // Auto-repeat detected within debounce window → long press → insert newline
+          enterCancelledRef.current = true;
+          clearTimeout(enterTimerRef.current);
+          enterTimerRef.current = null;
           setPrompt(prev => prev + '\n');
         }
       }
@@ -351,6 +369,12 @@ export const App: React.FC = () => {
     }
 
     if (input && !key.ctrl && !key.meta) {
+      // Any character input cancels a pending Enter-submit timer
+      if (enterTimerRef.current) {
+        clearTimeout(enterTimerRef.current);
+        enterTimerRef.current = null;
+        enterCancelledRef.current = true;
+      }
       if (prompt === '' && input === '/') {
         if (state.currentScreen === 'home') process.stdout.write('\x1b[2J\x1b[H');
         setShowCommandPalette(true);

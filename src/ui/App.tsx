@@ -427,8 +427,41 @@ export const App: React.FC = () => {
       }
       return;
     }
-    if (key.upArrow || key.downArrow) {
-      return; // Consume but do nothing (no history yet)
+    if (key.upArrow) {
+      // Move cursor up one line
+      if (pasteDetectedRef.current) return;
+      const lines = prompt.split('\n');
+      let charCount = 0;
+      let curLine = 0;
+      for (let i = 0; i < lines.length; i++) {
+        if (charCount + lines[i].length >= cursorPos) { curLine = i; break; }
+        charCount += lines[i].length + 1;
+      }
+      if (curLine > 0) {
+        const colInLine = cursorPos - charCount;
+        const prevLineStart = charCount - lines[curLine - 1].length - 1;
+        const prevLineLen = lines[curLine - 1].length;
+        setCursorPos(prevLineStart + Math.min(colInLine, prevLineLen));
+      }
+      return;
+    }
+    if (key.downArrow) {
+      // Move cursor down one line
+      if (pasteDetectedRef.current) return;
+      const lines = prompt.split('\n');
+      let charCount = 0;
+      let curLine = 0;
+      for (let i = 0; i < lines.length; i++) {
+        if (charCount + lines[i].length >= cursorPos) { curLine = i; break; }
+        charCount += lines[i].length + 1;
+      }
+      if (curLine < lines.length - 1) {
+        const colInLine = cursorPos - charCount;
+        const nextLineStart = charCount + lines[curLine].length + 1;
+        const nextLineLen = lines[curLine + 1].length;
+        setCursorPos(nextLineStart + Math.min(colInLine, nextLineLen));
+      }
+      return;
     }
 
     if (input && !key.ctrl && !key.meta) {

@@ -423,33 +423,14 @@ export const App: React.FC = () => {
     }
     if (key.upArrow) {
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
-      const before = prompt.slice(0, cursorPos);
-      const prevNl = before.lastIndexOf('\n');
-      if (prevNl !== -1) {
-        const col = cursorPos - prevNl - 1; // column in current line
-        const beforePrev = before.slice(0, prevNl);
-        const prevLineStart = beforePrev.lastIndexOf('\n') + 1; // 0 if not found (-1+1=0)
-        const prevLineLen = prevNl - prevLineStart;
-        setCursorPos(prevLineStart + Math.min(col, prevLineLen));
-      }
+      // Temporary: move up like left arrow to test if Ink receives events
+      setCursorPos(prev => Math.max(0, prev - 1));
       return;
     }
     if (key.downArrow) {
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
-      const text = prompt;
-      const after = text.slice(cursorPos);
-      const nextNl = after.indexOf('\n');
-      if (nextNl !== -1) {
-        const beforeCursor = text.slice(0, cursorPos);
-        const curLineStart = beforeCursor.lastIndexOf('\n') + 1;
-        const col = cursorPos - curLineStart;
-        // Next line starts right after this newline
-        const nextLineStart = cursorPos + nextNl + 1;
-        const afterNext = text.slice(nextLineStart);
-        const nextLineEnd = afterNext.indexOf('\n');
-        const nextLineLen = nextLineEnd === -1 ? afterNext.length : nextLineEnd;
-        setCursorPos(nextLineStart + Math.min(col, nextLineLen));
-      }
+      // Temporary: move down like right arrow to test if Ink receives events
+      setCursorPos(prev => Math.min(cursorPromptLen.current, prev + 1));
       return;
     }
 

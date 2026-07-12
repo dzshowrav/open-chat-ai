@@ -540,6 +540,17 @@ function transformMarkdownLine(line: string): string {
   return transformInline(line);
 }
 
+// ─── Helper to check if a trimmed line starts a new markdown block ─────────
+function isNewBlock(trimmed: string): boolean {
+  return (
+    trimmed.startsWith('#') ||
+    trimmed.startsWith('>') ||
+    trimmed.startsWith('```') ||
+    /^[-*+]\s+/.test(trimmed) ||
+    /^\d+\.\s+/.test(trimmed)
+  );
+}
+
 // ─── Main streaming Markdown + Code processor ────────────────────────────────
 interface ProcessResult {
   id: string;
@@ -569,44 +580,66 @@ function processMarkdown(text: string, id: string, partial: boolean): ProcessRes
   const rawLines = cleanText.split('\n');
   const lines: string[] = [];
 
-  // Preprocess: merge wrapped table lines (handles cases where AI wrapped cells without pipes)
+  let inTable = false;
+
+  // Preprocess: merge wrapped table lines (handles cases where AI wrapped cells/columns across lines)
   for (let k = 0; k < rawLines.length; k++) {
-    let current = rawLines[k];
+    const current = rawLines[k];
     const trimmed = current.trim();
 
-    if (trimmed.startsWith('|') && !trimmed.endsWith('|')) {
-      let mergeIndex = k + 1;
-      let toMerge = '';
-      let foundEnd = false;
+    if (trimmed === '') {
+      inTable = false;
+      lines.push(current);
+      continue;
+    }
 
-      while (mergeIndex < rawLines.length) {
-        const nextLine = rawLines[mergeIndex];
-        const nextTrimmed = nextLine.trim();
+    if (isNewBlock(trimmed)) {
+      inTable = false;
+      lines.push(current);
+      continue;
+    }
 
-        if (nextTrimmed.startsWith('|')) {
-          break;
-        }
-        if (nextTrimmed === '') {
-          break;
-        }
-
-        toMerge += ' ' + nextTrimmed;
-
-        if (nextTrimmed.endsWith('|')) {
-          foundEnd = true;
-          break;
-        }
-
-        mergeIndex++;
-      }
-
-      if (foundEnd) {
-        current = current + toMerge;
-        k = mergeIndex; // Skip merged lines
+    // Check if a table is starting
+    if (!inTable) {
+      const nextLine = rawLines[k + 1];
+      if (trimmed.startsWith('|') && nextLine && /^\|\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|$/.test(nextLine.trim())) {
+        inTable = true;
       }
     }
 
-    lines.push(current);
+    if (inTable) {
+      if (trimmed.startsWith('|')) {
+        let row = current;
+        if (!trimmed.endsWith('|')) {
+          // Merge subsequent lines until we find one that ends with '|' or starts a new block/row
+          let mergeIndex = k + 1;
+          while (mergeIndex < rawLines.length) {
+            const next = rawLines[mergeIndex];
+            const nextTrimmed = next.trim();
+            if (nextTrimmed.startsWith('|') || nextTrimmed === '' || isNewBlock(nextTrimmed)) {
+              break;
+            }
+            row += ' ' + nextTrimmed;
+            k = mergeIndex;
+            if (nextTrimmed.endsWith('|')) {
+              break;
+            }
+            mergeIndex++;
+          }
+        }
+        lines.push(row);
+      } else {
+        // Line doesn't start with '|' but we are in a table block: it's a wrapped line
+        if (lines.length > 0) {
+          const lastIndex = lines.length - 1;
+          lines[lastIndex] = lines[lastIndex] + ' ' + trimmed;
+        } else {
+          lines.push(current);
+        }
+      }
+    } else {
+      lines.push(current);
+    }
   }
 
   const output: string[] = [];

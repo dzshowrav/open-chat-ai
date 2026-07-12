@@ -16,6 +16,7 @@ import { Text } from 'ink';
 import { Worker } from 'worker_threads';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { themeManager } from '../theme/themeManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,7 +95,7 @@ function getWorker(): Worker | null {
  * Returns a Promise that resolves with the ANSI-colored output.
  * Falls back to raw text if worker is unavailable or times out.
  */
-function renderAsync(text: string, partial: boolean): Promise<string> {
+function renderAsync(text: string, partial: boolean, themeColors: { primary: string; accent: string }): Promise<string> {
   return new Promise<string>((resolve) => {
     const worker = getWorker();
     if (!worker) {
@@ -113,7 +114,7 @@ function renderAsync(text: string, partial: boolean): Promise<string> {
 
     _pending.set(id, { resolve, timer });
 
-    worker.postMessage({ id, text, partial });
+    worker.postMessage({ id, text, partial, themeColors });
   });
 }
 
@@ -153,7 +154,9 @@ export const MarkdownWorker: React.FC<MarkdownWorkerProps> = ({
 
   const scheduleRender = useCallback(
     (text: string, partial: boolean, version: number) => {
-      renderAsync(text, partial).then((result) => {
+      const theme = themeManager.getCurrentTheme();
+      const themeColors = { primary: theme.primaryColor, accent: theme.accentColor };
+      renderAsync(text, partial, themeColors).then((result) => {
         // Only apply if we're still on the same version (content hasn't changed)
         if (version === contentVersion.current) {
           setRendered(result);

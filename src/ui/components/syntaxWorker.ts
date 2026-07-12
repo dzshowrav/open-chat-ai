@@ -484,19 +484,21 @@ function renderTable(tableLines: string[]): string {
   return ['', topBorder, headerLine, sepLine, ...dataLines, botBorder, ''].join('\n');
 }
 
+let activeThemeColors = { primary: '#bb9af7', accent: '#7aa2f7' };
+
 // ─── Block-level Markdown renderer ───────────────────────────────────────────
 function transformMarkdownLine(line: string): string {
   // Headings — by specificity (longest first)
-  if (/^######\s/.test(line)) return c.hex('#9ece6a').bold(line);
-  if (/^#####\s/.test(line))  return c.hex('#7dcfff').bold(line);
-  if (/^####\s/.test(line))   return c.hex('#e0af68').bold(line);
-  if (/^###\s/.test(line))    return c.hex('#ff9e64').bold(line);
-  if (/^##\s/.test(line))     return c.hex('#7aa2f7').bold(line);
-  if (/^#\s/.test(line))      return c.hex('#bb9af7').bold(line);
+  if (/^######\s/.test(line)) return c.hex(activeThemeColors.accent).bold(line);
+  if (/^#####\s/.test(line))  return c.hex(activeThemeColors.primary).bold(line);
+  if (/^####\s/.test(line))   return c.hex(activeThemeColors.accent).bold(line);
+  if (/^###\s/.test(line))    return c.hex(activeThemeColors.primary).bold(line);
+  if (/^##\s/.test(line))     return c.hex(activeThemeColors.accent).bold(line);
+  if (/^#\s/.test(line))      return c.hex(activeThemeColors.primary).bold(line);
 
   // Horizontal rules (dev2.md) — gradient-like thick rule
   if (/^(-{3,}|\*{3,}|_{3,})$/.test(line.trim())) {
-    return c.hex('#3d59a1')('━'.repeat(50));
+    return c.hex(activeThemeColors.primary)('━'.repeat(50));
   }
 
   // Blockquotes — nested depth support (dev2.md §11.3)
@@ -701,8 +703,13 @@ parentPort?.on('message', (message: {
   id: string;
   text: string;
   partial?: boolean;
+  themeColors?: { primary: string; accent: string };
 }) => {
-  const { id, text, partial = false } = message;
+  const { id, text, partial = false, themeColors } = message;
+
+  if (themeColors) {
+    activeThemeColors = themeColors;
+  }
 
   try {
     if (!text || typeof text !== 'string') {

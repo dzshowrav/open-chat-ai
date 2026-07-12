@@ -166,12 +166,25 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Messa
   if (msg.role === 'system') return null;
 
   if (msg.role === 'user') {
+    const customBorder = {
+      left: '┃',
+      top: '',
+      right: '',
+      bottom: '',
+      topLeft: '',
+      topRight: '',
+      bottomLeft: '',
+      bottomRight: ''
+    };
+
     return (
-      <Box key={idx} flexDirection="row" marginY={isMobile ? 0.1 : 0.5}>
-        <Box marginRight={1}>
-          <Text color={theme.primaryColor} bold>&gt;</Text>
-        </Box>
-        <Box flexShrink={1} flexGrow={1}>
+      <Box key={idx} flexDirection="column" marginY={isMobile ? 0.1 : 0.5} paddingLeft={2}>
+        <Box
+          borderStyle={customBorder}
+          borderColor={theme.primaryColor}
+          paddingLeft={2}
+          paddingY={isMobile ? 0 : 1}
+        >
           <Text color={theme.primaryColor} wrap="wrap">{msg.content}</Text>
         </Box>
       </Box>

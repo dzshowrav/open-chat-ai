@@ -13,6 +13,40 @@ import { ShellSubmessageMotion } from '../components/shell-submessage-motion.js'
 import { SettingRepository } from '../../database/repositories/settingRepository.js';
 
 const settingRepo = new SettingRepository();
+function getHighlightBgColor(baseBg: string, darkMode: boolean): string {
+  let hex = baseBg.trim();
+  if (hex.startsWith('#')) {
+    hex = hex.slice(1);
+  }
+  if (hex.length === 3) {
+    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+  }
+  if (hex.length !== 6) {
+    return darkMode ? '#1a1a1a' : '#f5f5f5';
+  }
+  
+  let r = parseInt(hex.slice(0, 2), 16);
+  let g = parseInt(hex.slice(2, 4), 16);
+  let b = parseInt(hex.slice(4, 6), 16);
+  
+  if (darkMode) {
+    r = Math.min(255, r + 15);
+    g = Math.min(255, g + 15);
+    b = Math.min(255, b + 18);
+  } else {
+    r = Math.max(0, r - 12);
+    g = Math.max(0, g - 12);
+    b = Math.max(0, b - 10);
+  }
+  
+  const toHex = (c: number) => {
+    const h = c.toString(16);
+    return h.length === 1 ? '0' + h : h;
+  };
+  
+  return '#' + toHex(r) + toHex(g) + toHex(b);
+}
+
 let cachedWords: Record<string, string> | null = null;
 
 function resolveStatusWord(toolName: string | null): string {
@@ -165,6 +199,8 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Messa
 
   if (msg.role === 'system') return null;
 
+  const cardBorderColor = theme.darkMode ? '#3b4261' : '#cbd5e1';
+
   if (msg.role === 'user') {
     const customBorder = {
       left: '┃',
@@ -194,15 +230,23 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Messa
   if (msg.role === 'assistant') {
     const toolCalls = getToolCallsArray(msg.tool_calls);
     return (
-      <Box key={idx} flexDirection="column" marginY={isMobile ? 0.1 : 0.5}>
+      <Box 
+        key={idx} 
+        flexDirection="column" 
+        marginY={isMobile ? 0.1 : 0.5} 
+        paddingX={isMobile ? 1 : 2}
+        paddingY={isMobile ? 0.2 : 0.5}
+        borderStyle="round"
+        borderColor={cardBorderColor}
+      >
         {msg.reasoning_content && (
           <Box flexDirection="column" marginY={isMobile ? 0.1 : 0.2} marginLeft={1}>
             <Box flexDirection="row">
               <Text color="#7aa2f7" bold>● Thinking Process</Text>
             </Box>
-             <Box marginLeft={1} flexShrink={1} flexGrow={1}>
-               <Text color={theme.darkMode ? '#80d4ff' : '#2a4365'} italic wrap="wrap">{msg.reasoning_content}</Text>
-             </Box>
+            <Box marginLeft={1} flexShrink={1} flexGrow={1}>
+              <Text color={theme.darkMode ? '#80d4ff' : '#2a4365'} italic wrap="wrap">{msg.reasoning_content}</Text>
+            </Box>
           </Box>
         )}
 
@@ -375,8 +419,17 @@ const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: st
     };
   }, []);
 
+  const cardBorderColor = theme.darkMode ? '#3b4261' : '#cbd5e1';
+
   return (
-    <Box flexDirection="column" marginY={isMobile ? 0.1 : 0.5}>
+    <Box 
+      flexDirection="column" 
+      marginY={isMobile ? 0.1 : 0.5} 
+      paddingX={isMobile ? 1 : 2}
+      paddingY={isMobile ? 0.2 : 0.5}
+      borderStyle="round"
+      borderColor={cardBorderColor}
+    >
       {reasoning && (
         <Box flexDirection="column" marginY={isMobile ? 0.1 : 0.2} marginLeft={1}>
           <Box flexDirection="row">

@@ -1,0 +1,5 @@
+=== ARROW KEY TEST START ===
+Node v26.3.1
+input="c" up=false down=false left=false right=false ret=false
+input="" up=true down=false left=false right=false ret=false
+UP: cursor 14 -> 5 (col=5)

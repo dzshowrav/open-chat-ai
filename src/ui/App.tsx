@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Text, useInput, useApp, useStdout } from 'ink';
-import fs from 'node:fs';
 import { stateManager, AppState } from '../core/state.js';
 import { AppEngine } from '../core/engine.js';
 import { eventBus } from '../core/events.js';
@@ -243,11 +242,6 @@ export const App: React.FC = () => {
 
   // Main UI Keyboard listener
   useInput((input: string, key: any) => {
-    // Debug: log every key event
-    try { fs.appendFileSync('/storage/emulated/0/htdocs/open-chat/key-debug.log',
-      `input=${JSON.stringify(input)} up=${!!key.upArrow} down=${!!key.downArrow} left=${!!key.leftArrow} right=${!!key.rightArrow} ret=${!!key.return} esc=${!!key.escape} ctrl=${!!key.ctrl} meta=${!!key.meta} promptLen=${prompt.length} cursor=${cursorPos}\n`);
-    } catch(e) {}
-
     if (state.errorMsg) {
       if (key.escape || key.return) stateManager.setState({ errorMsg: null });
       return;

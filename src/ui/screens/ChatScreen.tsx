@@ -235,7 +235,8 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Messa
         flexDirection="column" 
         marginY={isMobile ? 0.1 : 0.5} 
         paddingX={isMobile ? 1 : 2}
-        paddingY={isMobile ? 0.2 : 0.5}
+        paddingTop={0}
+        paddingBottom={isMobile ? 0 : 1}
         borderStyle="round"
         borderColor={cardBorderColor}
       >
@@ -426,7 +427,8 @@ const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: st
       flexDirection="column" 
       marginY={isMobile ? 0.1 : 0.5} 
       paddingX={isMobile ? 1 : 2}
-      paddingY={isMobile ? 0.2 : 0.5}
+      paddingTop={0}
+      paddingBottom={isMobile ? 0 : 1}
       borderStyle="round"
       borderColor={cardBorderColor}
     >

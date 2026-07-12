@@ -1,6 +1,26 @@
 import { Provider, Message } from '../types/index.js';
 import { eventBus } from '../core/events.js';
 
+// Default timeout per chat request (milliseconds)
+// Prevents hanging connections from freezing the app
+const REQUEST_TIMEOUT_MS = 120_000; // 2 minutes
+
+/**
+ * Combine user-provided AbortSignal with a timeout signal.
+ * If either aborts, the combined signal aborts too.
+ * Falls back to just the timeout signal if AbortSignal.any() unavailable.
+ */
+function withTimeout(signal?: AbortSignal, ms: number = REQUEST_TIMEOUT_MS): AbortSignal {
+  const timeoutSignal = AbortSignal.timeout(ms);
+  if (!signal) return timeoutSignal;
+  try {
+    // Node.js 20+ — combine both signals
+    return AbortSignal.any([signal, timeoutSignal]);
+  } catch {
+    return timeoutSignal;
+  }
+}
+
 export interface ChatRequestOptions {
   provider: Provider;
   model: string;
@@ -98,7 +118,7 @@ export class ApiEngine {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload),
-        signal
+        signal: withTimeout(signal)
       });
 
       if (!response.ok) {
@@ -125,7 +145,7 @@ export class ApiEngine {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload),
-      signal
+      signal: withTimeout(signal)
     });
 
     if (!response.ok) {

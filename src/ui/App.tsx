@@ -565,41 +565,52 @@ export const App: React.FC = () => {
     );
 
     if (toolCalls.length > 0) {
-      // Save assistant message with tool calls
-      sessionRepo.addMessage({
-        session_id: sessionId,
-        role: 'assistant',
-        content: content || null,
-        reasoning_content: reasoning || null,
-        tool_calls: JSON.stringify(toolCalls)
-      });
-      setMessages(sessionRepo.getMessages(sessionId));
-
-      // Execute tools and save results
-      const toolResults = await executeToolCalls(toolCalls);
-      for (const tr of toolResults) {
+      try {
+        // Save assistant message with tool calls
         sessionRepo.addMessage({
           session_id: sessionId,
-          role: 'tool',
-          content: tr.content,
-          tool_call_id: tr.tool_call_id || ''
+          role: 'assistant',
+          content: content || null,
+          reasoning_content: reasoning || null,
+          tool_calls: JSON.stringify(toolCalls)
         });
+        setMessages(sessionRepo.getMessages(sessionId));
+
+        // Execute tools and save results
+        const toolResults = await executeToolCalls(toolCalls);
+        for (const tr of toolResults) {
+          sessionRepo.addMessage({
+            session_id: sessionId,
+            role: 'tool',
+            content: tr.content,
+            tool_call_id: tr.tool_call_id || ''
+          });
+        }
+        setMessages(sessionRepo.getMessages(sessionId));
+      } catch (dbErr: any) {
+        // DB error during tool round — log and bail out gracefully
+        stateManager.setState({ errorMsg: `DB error during tool execution: ${dbErr.message || String(dbErr)}` });
+        eventBus.emit('stream:finished', { fullText: content || '', tokensCount: 0 });
+        return;
       }
-      setMessages(sessionRepo.getMessages(sessionId));
 
       // Recursively call generateResponse for the model to react to tool results
       return generateResponse(sessionId, provider, modelString, runCount + 1);
     }
 
     // No tool calls — final text response
-    if (content || reasoning) {
-      sessionRepo.addMessage({
-        session_id: sessionId,
-        role: 'assistant',
-        content: content,
-        reasoning_content: reasoning || null
-      });
-      setMessages(sessionRepo.getMessages(sessionId));
+    try {
+      if (content || reasoning) {
+        sessionRepo.addMessage({
+          session_id: sessionId,
+          role: 'assistant',
+          content: content,
+          reasoning_content: reasoning || null
+        });
+        setMessages(sessionRepo.getMessages(sessionId));
+      }
+    } catch (dbErr: any) {
+      stateManager.setState({ errorMsg: `DB error saving response: ${dbErr.message || String(dbErr)}` });
     }
 
     eventBus.emit('stream:finished', { fullText: content, fullReasoning: reasoning, tokensCount: 0 });

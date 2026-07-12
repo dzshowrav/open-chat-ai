@@ -19,9 +19,24 @@ export class AppEngine {
     try {
       this.db = initDatabase();
 
-      // Listen to process exit signals to ensure clean teardown
-      process.on('SIGINT', () => this.exit(0));
-      process.on('SIGTERM', () => this.exit(0));
+      // ─────────────────────────────────────────────────────
+      // Signal handling for process stability
+      // ─────────────────────────────────────────────────────
+      // SIGINT (Ctrl+C) is handled by Ink's exitOnCtrlC:false
+      // inside the React component. No need to register here.
+      
+      // SIGTERM (from Termux/Android when backgrounded):
+      // Do NOT exit immediately — wait for multiple signals
+      // to avoid Android killing the process accidentally.
+      let sigtermCount = 0;
+      const SIGTERM_THRESHOLD = 3; // Only exit after 3 SIGTERMs
+      process.on('SIGTERM', () => {
+        sigtermCount++;
+        if (sigtermCount >= SIGTERM_THRESHOLD) {
+          this.exit(0);
+        }
+      });
+
       process.on('exit', () => {
         McpManager.disconnectAll();
         closeDatabase();

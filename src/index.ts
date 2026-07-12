@@ -5,6 +5,20 @@ import { AppEngine } from './core/engine.js';
 import { eventBus } from './core/events.js';
 import App from './ui/App.js';
 
+// ─────────────────────────────────────────────────────────
+// Process-level crash protection (Node.js v26+)
+// Without these, ANY unhandled rejection crashes the entire app.
+// ─────────────────────────────────────────────────────────
+process.on('unhandledRejection', (reason: unknown) => {
+  // Log and continue — app stays alive
+  const msg = reason instanceof Error ? reason.message : String(reason);
+  console.error(`[OpenChat] Unhandled Rejection: ${msg}`);
+});
+process.on('uncaughtException', (err: Error) => {
+  // Log and continue — prevents immediate crash
+  console.error(`[OpenChat] Uncaught Exception: ${err.message}`);
+});
+
 async function main() {
   const engine = new AppEngine();
 

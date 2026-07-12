@@ -109,6 +109,23 @@ export const App: React.FC = () => {
   } | null>(null);
 
   useEffect(() => {
+    if (theme && theme.backgroundColor) {
+      process.stdout.write(`\x1b]11;${theme.backgroundColor}\x07`);
+    }
+  }, [theme.id, theme.backgroundColor]);
+
+  useEffect(() => {
+    const handleExit = () => {
+      process.stdout.write('\x1b]111\x07');
+    };
+    process.on('exit', handleExit);
+    return () => {
+      process.off('exit', handleExit);
+      handleExit();
+    };
+  }, []);
+
+  useEffect(() => {
     // Subscribe to central state modifications
     const unsubscribe = stateManager.subscribe((newState) => {
       setState(newState);

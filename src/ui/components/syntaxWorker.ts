@@ -175,27 +175,31 @@ function renderBlockquote(line: string): string {
 }
 
 // ─── Diff syntax highlighter (dev.md) ────────────────────────────────────────
-function highlightDiff(code: string): string {
+function highlightDiff(code: string, columns: number = terminalColumns): string {
+  const width = Math.max(40, columns - 6);
   return code
     .split('\n')
     .map((line) => {
-      if (line.startsWith('+')) return c.hex('#9ece6a')(line);
-      if (line.startsWith('-')) return c.hex('#f7768e')(line);
-      if (line.startsWith('@@')) return c.hex('#7dcfff')(line);
+      const paddedLine = line.padEnd(width, ' ');
+      if (line.startsWith('+')) return c.bgHex('#2e3c30').hex('#9ece6a')(paddedLine);
+      if (line.startsWith('-')) return c.bgHex('#3f2d30').hex('#f7768e')(paddedLine);
+      if (line.startsWith('@@')) return c.bgHex('#1f2335').hex('#7dcfff')(paddedLine);
       return c.hex('#565f89').dim(line);
     })
     .join('\n');
 }
 
 // ─── Box-drawing header for code blocks ──────────────────────────────────────
-function renderCodeBlockHeader(lang: string): string {
+function renderCodeBlockHeader(lang: string, columns: number = terminalColumns): string {
   const label = lang ? lang.toUpperCase() : 'CODE';
-  const bar = '─'.repeat(Math.max(0, 48 - label.length - 3));
+  const width = Math.max(20, Math.min(columns - 4, 80));
+  const bar = '─'.repeat(Math.max(0, width - label.length - 5));
   return c.hex('#3d59a1')(`╭─ ${label} ${bar}╮`);
 }
 
-function renderCodeBlockFooter(): string {
-  return c.hex('#3d59a1')('╰' + '─'.repeat(50) + '╯');
+function renderCodeBlockFooter(columns: number = terminalColumns): string {
+  const width = Math.max(20, Math.min(columns - 4, 80));
+  return c.hex('#3d59a1')('╰' + '─'.repeat(width - 2) + '╯');
 }
 
 // ─── Line-number gutter renderer ─────────────────────────────────────────────
@@ -213,12 +217,12 @@ function addLineNumbers(code: string): string {
 }
 
 // ─── Core syntax highlighter ──────────────────────────────────────────────────
-function highlightCode(code: string, lang: string): string {
+function highlightCode(code: string, lang: string, columns: number = terminalColumns): string {
   const normalLang = normalizeLanguage(lang);
 
   // Custom diff highlighting (dev.md) — must check before cli-highlight
   if (normalLang === 'diff') {
-    return highlightDiff(code);
+    return highlightDiff(code, columns);
   }
 
   try {
@@ -385,6 +389,41 @@ function getVisibleLength(str: string): number {
 }
 
 /**
+ * Truncate a string to a given visible length, preserving ANSI escape codes.
+ */
+function truncateAnsi(str: string, maxLength: number): string {
+  const ESC = '\u001b';
+  let result = '';
+  let visibleCount = 0;
+  let i = 0;
+
+  while (i < str.length && visibleCount < maxLength) {
+    if (str[i] === ESC || str[i] === '\x1B') {
+      let ansiSeq = '';
+      while (i < str.length) {
+        const char = str[i];
+        ansiSeq += char;
+        i++;
+        if (char.match(/[a-zA-Z]/)) {
+          break;
+        }
+      }
+      result += ansiSeq;
+    } else {
+      result += str[i];
+      visibleCount++;
+      i++;
+    }
+  }
+
+  if (visibleCount >= maxLength && i < str.length) {
+    result += '…';
+  }
+  result += '\u001b[0m'; // Reset style
+  return result;
+}
+
+/**
  * Pad a string to a given visual width, accounting for ANSI escape codes.
  */
 function padCell(
@@ -445,13 +484,23 @@ function renderTable(tableLines: string[]): string {
   );
 
   // Calculate column widths (minimum = header length, expand for data) using visible length
-  const colWidths: number[] = headerRowTransformed.map((h, i) => {
+  let colWidths: number[] = headerRowTransformed.map((h, i) => {
     let max = getVisibleLength(h);
     for (const row of normDataRowsTransformed) {
       max = Math.max(max, getVisibleLength(row[i] ?? ''));
     }
     return max;
   });
+
+  // Mobile responsiveness: Cap column widths if they exceed available terminal width
+  const maxAvailableWidth = terminalColumns - (colCount * 3 + 1); // accounts for borders and padding spaces
+  const currentTotalWidth = colWidths.reduce((sum, w) => sum + w, 0);
+
+  if (currentTotalWidth > maxAvailableWidth && maxAvailableWidth > 10) {
+    const averageWidth = Math.floor(maxAvailableWidth / colCount);
+    const cap = Math.max(8, averageWidth);
+    colWidths = colWidths.map((w) => (w > cap ? cap : w));
+  }
 
   // ── Box-drawing render ──────────────────────────────────────────────────
   const bord = (s: string) => c.hex('#3d59a1')(s);
@@ -468,7 +517,10 @@ function renderTable(tableLines: string[]): string {
   const headerLine =
     bord('│') +
     headerRowTransformed
-      .map((cell, i) => head(padCell(cell, colWidths[i], alignments[i] ?? 'left')))
+      .map((cell, i) => {
+        const truncated = truncateAnsi(cell, colWidths[i]);
+        return head(padCell(truncated, colWidths[i], alignments[i] ?? 'left'));
+      })
       .join(bord('│')) +
     bord('│');
 
@@ -479,14 +531,21 @@ function renderTable(tableLines: string[]): string {
     bord('┤');
 
   // Data rows: │ D1  │ D2  │
-  const dataLines = normDataRowsTransformed.map(
-    (row) =>
+  const dataLines = normDataRowsTransformed.map((row, rowIndex) => {
+    const isEven = rowIndex % 2 === 0;
+    const cellBg = isEven ? '#1f2335' : '#24283b'; // Tokyo night styled subtle background
+    return (
       bord('│') +
       row
-        .map((cell, i) => data(padCell(cell, colWidths[i], alignments[i] ?? 'left')))
+        .map((cell, i) => {
+          const truncated = truncateAnsi(cell, colWidths[i]);
+          const padded = padCell(truncated, colWidths[i], alignments[i] ?? 'left');
+          return c.bgHex(cellBg)(data(padded));
+        })
         .join(bord('│')) +
       bord('│')
-  );
+    );
+  });
 
   // Bottom border: ╰─────┴─────╯
   const botBorder =
@@ -497,6 +556,7 @@ function renderTable(tableLines: string[]): string {
   return ['', topBorder, headerLine, sepLine, ...dataLines, botBorder, ''].join('\n');
 }
 
+let terminalColumns = 80;
 let activeThemeColors = { primary: '#bb9af7', accent: '#7aa2f7' };
 
 // ─── Block-level Markdown renderer ───────────────────────────────────────────
@@ -511,7 +571,7 @@ function transformMarkdownLine(line: string): string {
 
   // Horizontal rules (dev2.md) — gradient-like thick rule
   if (/^(-{3,}|\*{3,}|_{3,})$/.test(line.trim())) {
-    return c.hex(activeThemeColors.primary)('━'.repeat(50));
+    return c.hex(activeThemeColors.primary)('━'.repeat(Math.min(terminalColumns - 4, 80)));
   }
 
   // Blockquotes — nested depth support (dev2.md §11.3)
@@ -682,13 +742,13 @@ function processMarkdown(text: string, id: string, partial: boolean): ProcessRes
       inCodeBlock = false;
 
       const rawCode = codeLines.join('\n');
-      const highlighted = highlightCode(rawCode, codeLang);
+      const highlighted = highlightCode(rawCode, codeLang, terminalColumns);
       const withLineNums = addLineNumbers(highlighted);
 
       output.push('');
-      output.push(renderCodeBlockHeader(codeLang));
+      output.push(renderCodeBlockHeader(codeLang, terminalColumns));
       output.push(withLineNums);
-      output.push(renderCodeBlockFooter());
+      output.push(renderCodeBlockFooter(terminalColumns));
       output.push('');
 
       codeLines = [];
@@ -724,16 +784,16 @@ function processMarkdown(text: string, id: string, partial: boolean): ProcessRes
   // ── Handle unclosed code block (streaming partial) ────────────────────
   if (inCodeBlock && codeLines.length > 0) {
     const rawCode = codeLines.join('\n');
-    const highlighted = highlightCode(rawCode, codeLang);
+    const highlighted = highlightCode(rawCode, codeLang, terminalColumns);
     const withLineNums = addLineNumbers(highlighted);
     output.push('');
-    output.push(renderCodeBlockHeader(codeLang));
+    output.push(renderCodeBlockHeader(codeLang, terminalColumns));
     output.push(withLineNums);
     if (partial) {
       // Show a live streaming indicator
       output.push(c.hex('#3d59a1')('╰') + c.hex('#565f89').dim(' …streaming…'));
     } else {
-      output.push(renderCodeBlockFooter());
+      output.push(renderCodeBlockFooter(terminalColumns));
     }
     output.push('');
   }
@@ -752,11 +812,16 @@ parentPort?.on('message', (message: {
   text: string;
   partial?: boolean;
   themeColors?: { primary: string; accent: string };
+  columns?: number;
 }) => {
-  const { id, text, partial = false, themeColors } = message;
+  const { id, text, partial = false, themeColors, columns } = message;
 
   if (themeColors) {
     activeThemeColors = themeColors;
+  }
+
+  if (columns) {
+    terminalColumns = columns;
   }
 
   try {

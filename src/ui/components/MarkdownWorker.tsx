@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Text } from 'ink';
+import { Text, useStdout } from 'ink';
 import { Worker } from 'worker_threads';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -95,7 +95,12 @@ function getWorker(): Worker | null {
  * Returns a Promise that resolves with the ANSI-colored output.
  * Falls back to raw text if worker is unavailable or times out.
  */
-function renderAsync(text: string, partial: boolean, themeColors: { primary: string; accent: string }): Promise<string> {
+function renderAsync(
+  text: string,
+  partial: boolean,
+  themeColors: { primary: string; accent: string },
+  columns: number
+): Promise<string> {
   return new Promise<string>((resolve) => {
     const worker = getWorker();
     if (!worker) {
@@ -114,7 +119,7 @@ function renderAsync(text: string, partial: boolean, themeColors: { primary: str
 
     _pending.set(id, { resolve, timer });
 
-    worker.postMessage({ id, text, partial, themeColors });
+    worker.postMessage({ id, text, partial, themeColors, columns });
   });
 }
 
@@ -143,6 +148,9 @@ export const MarkdownWorker: React.FC<MarkdownWorkerProps> = ({
   content,
   isStreaming = false,
 }) => {
+  const { stdout } = useStdout();
+  const columns = stdout?.columns || 80;
+
   // Displayed output — starts as the raw content (instant first paint)
   const [rendered, setRendered] = useState<string>(content);
 
@@ -153,10 +161,10 @@ export const MarkdownWorker: React.FC<MarkdownWorkerProps> = ({
   const contentVersion = useRef<number>(0);
 
   const scheduleRender = useCallback(
-    (text: string, partial: boolean, version: number) => {
+    (text: string, partial: boolean, version: number, cols: number) => {
       const theme = themeManager.getCurrentTheme();
       const themeColors = { primary: theme.primaryColor, accent: theme.accentColor };
-      renderAsync(text, partial, themeColors).then((result) => {
+      renderAsync(text, partial, themeColors, cols).then((result) => {
         // Only apply if we're still on the same version (content hasn't changed)
         if (version === contentVersion.current) {
           setRendered(result);
@@ -188,11 +196,11 @@ export const MarkdownWorker: React.FC<MarkdownWorkerProps> = ({
       // During active streaming: debounce aggressively (50ms)
       // so we're not overwhelming the worker with every single token
       debounceTimer.current = setTimeout(() => {
-        scheduleRender(content, true, version);
+        scheduleRender(content, true, version, columns);
       }, 50);
     } else {
       // Message is complete: render immediately (no debounce)
-      scheduleRender(content, false, version);
+      scheduleRender(content, false, version, columns);
     }
 
     return () => {
@@ -200,7 +208,7 @@ export const MarkdownWorker: React.FC<MarkdownWorkerProps> = ({
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [content, isStreaming, scheduleRender]);
+  }, [content, isStreaming, scheduleRender, columns]);
 
   return <Text>{rendered}</Text>;
 };

@@ -21,6 +21,35 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state }) => {
   const modelDisplay = state.activeModelId || 'No Model';
   const toolDisplay = state.activeToolName ? ` \u{F013} ${state.activeToolName}...` : '';
 
+  const isMobile = (process.stdout.rows || 24) < 18;
+
+  if (isMobile) {
+    return (
+      <Box 
+        width="100%" 
+        flexDirection="row" 
+        justifyContent="space-between" 
+        paddingX={1}
+      >
+        <Box>
+          <Text color={theme.primaryColor} bold>{"\u{F024B} "}{workspaceName}</Text>
+          {state.gitBranch && (
+            <Text color="#f7768e" bold> {gitDisplay.trim()}</Text>
+          )}
+          {state.activeToolName && (
+            <Text color="#e0af68" bold> {toolDisplay.trim()}</Text>
+          )}
+        </Box>
+        <Box>
+          <Text color={theme.accentColor} bold>
+            {modelDisplay}
+          </Text>
+          <Text color="#9ece6a"> • {state.contextUsagePercent}%</Text>
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Box 
       width="100%" 

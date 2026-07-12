@@ -220,6 +220,19 @@ export const App: React.FC = () => {
       return;
     }
 
+    if (key.ctrl && input === 'w') {
+      // Delete last word (Ctrl+W)
+      setPrompt(prev => {
+        const trimmed = prev.trimEnd();
+        const lastSpace = trimmed.lastIndexOf(' ');
+        if (lastSpace === -1) {
+          return '';
+        }
+        return prev.slice(0, lastSpace + 1);
+      });
+      return;
+    }
+
     // Let CommandPalette handle these navigation/action keys completely
     if (showCommandPalette && (key.upArrow || key.downArrow || key.return || key.escape)) {
       return; 
@@ -231,7 +244,29 @@ export const App: React.FC = () => {
     }
 
     if (key.return) {
-      handlePromptSubmit();
+      if (key.shift || key.ctrl) {
+        // Shift+Enter / Ctrl+Enter submits
+        handlePromptSubmit();
+      } else if (key.meta) {
+        // Alt+Enter / Option+Enter inserts newline
+        setPrompt(prev => prev + '\n');
+      } else {
+        // Standard Enter
+        if (prompt.trim() === '') {
+          return;
+        }
+
+        const hasNewlines = prompt.includes('\n');
+        const endsWithNewline = prompt.endsWith('\n');
+
+        // If it's a slash command, or a single-line message, submit immediately.
+        // If it's already a multi-line message, Enter adds a newline, and a second Enter submits.
+        if (prompt.startsWith('/') || !hasNewlines || endsWithNewline) {
+          handlePromptSubmit();
+        } else {
+          setPrompt(prev => prev + '\n');
+        }
+      }
       return;
     }
 
@@ -1063,11 +1098,22 @@ export const App: React.FC = () => {
 
       {/* Input prompt area */}
       <Box flexDirection="column">
-        <Box flexDirection="row" borderStyle="single" borderColor={theme.accentColor} paddingX={1} marginY={0.5}>
-          <Text color={theme.accentColor} bold>&gt; </Text>
-          {renderPromptPreview(prompt)}
-          <Text color="cyan">█</Text>
-        </Box>
+        {((process.stdout.rows || 24) < 18) ? (
+          <Box flexDirection="column">
+            <Text color="gray">{"─".repeat(process.stdout.columns || 80)}</Text>
+            <Box flexDirection="row" paddingX={1} marginY={0.2}>
+              <Text color={theme.accentColor} bold>&gt; </Text>
+              {renderPromptPreview(prompt)}
+              <Text color="cyan">█</Text>
+            </Box>
+          </Box>
+        ) : (
+          <Box flexDirection="row" borderStyle="single" borderColor={theme.accentColor} paddingX={1} marginY={0.5}>
+            <Text color={theme.accentColor} bold>&gt; </Text>
+            {renderPromptPreview(prompt)}
+            <Text color="cyan">█</Text>
+          </Box>
+        )}
         <StatusBar state={state} />
       </Box>
     </Box>

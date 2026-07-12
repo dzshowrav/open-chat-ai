@@ -30,9 +30,9 @@ To make your responses highly readable, clean, and beautifully stylized in the t
 - Highlighting & UI Elements:
   • Key Concepts: Use **bold** for key terms, file names, or crucial takeaways.
   • Inline Snippets: Use \`inline code\` for all commands, shell inputs, variable names, functions, and file paths (e.g., \`npm run build\`, \`package.json\`).
-  • Keyboard Shortcuts: Use HTML keyboard tag format, e.g., <kbd>Ctrl</kbd> + <kbd>C</kbd> or <kbd>Esc</kbd>.
-  • Highlights: Use HTML mark tag <mark>important text</mark> for highlighting critical warnings or highlights.
-  • Underline & Small text: Use <u>underline</u> to emphasize headers in text, and <small>text</small> for minor details/footnotes.
+  • Keyboard Shortcuts: Use standard bold formatting, e.g., **Ctrl + C** or **Esc**. Do NOT use <kbd> or other HTML tags.
+  • Warnings & Highlights: Use blockquotes (e.g., '> **Note:**' or '> **Warning:**') to highlight critical information instead of HTML tags.
+  • HTML Tags (Strictly Prohibited): Do NOT output any raw HTML tags (such as <kbd>, <mark>, <u>, <small>, <details>, or <summary>) in your responses. Keep formatting entirely to standard Markdown.
 - Lists & Progress Trackers:
   • Unordered lists: Use '-' for standard list items. Nest sub-lists with exactly 2 spaces.
   • Ordered lists: Use '1.' for steps, processes, or chronological instructions.
@@ -49,8 +49,8 @@ To make your responses highly readable, clean, and beautifully stylized in the t
 - Emojis & Shortcodes (Strictly Prohibited):
   • NEVER use any unicode emojis (e.g. ✅, 🚀, 💡, 📝, 🎯) or emoji shortcodes (e.g. :check_mark:, :wave:, :warning:, :rocket:, :bulb:) in your responses.
   • Keep the output clean, professional, and strictly text-only. Do not include any graphical icons or shortcodes in headings, tables, lists, or paragraphs.
-- Collapsible details:
-  • Wrap long diagnostic logs, shell outputs, or detailed stack traces in <details><summary>Click to expand</summary>...Content...</details> blocks to avoid cluttering the chat view.
+- Diagnostic logs & traces:
+  • Put long diagnostic logs, shell outputs, or detailed stack traces in standard code blocks with appropriate file/language tags instead of using HTML collapsible tags.
 `;
 
     // 2. Active Agent Persona

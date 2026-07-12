@@ -378,14 +378,21 @@ function parseAlignments(cells: string[]): Array<'left' | 'center' | 'right'> {
 }
 
 /**
- * Pad a string to a given visual width.
+ * Get the visible length of a string, ignoring ANSI escape codes.
+ */
+function getVisibleLength(str: string): number {
+  return str.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '').length;
+}
+
+/**
+ * Pad a string to a given visual width, accounting for ANSI escape codes.
  */
 function padCell(
   text: string,
   width: number,
   align: 'left' | 'center' | 'right'
 ): string {
-  const len = text.length;
+  const len = getVisibleLength(text);
   const pad = Math.max(0, width - len);
   if (align === 'right') return ' '.repeat(pad) + text + ' ';
   if (align === 'center') {
@@ -431,11 +438,17 @@ function renderTable(tableLines: string[]): string {
 
   const normDataRows = dataRows.map(normalize);
 
-  // Calculate column widths (minimum = header length, expand for data)
-  const colWidths: number[] = headerRow.map((h, i) => {
-    let max = h.length;
-    for (const row of normDataRows) {
-      max = Math.max(max, (row[i] ?? '').length);
+  // Transform cell content first so inline markdown (like kbd, code, bold) is resolved
+  const headerRowTransformed = headerRow.map((cell) => transformInline(cell));
+  const normDataRowsTransformed = normDataRows.map((row) =>
+    row.map((cell) => transformInline(cell))
+  );
+
+  // Calculate column widths (minimum = header length, expand for data) using visible length
+  const colWidths: number[] = headerRowTransformed.map((h, i) => {
+    let max = getVisibleLength(h);
+    for (const row of normDataRowsTransformed) {
+      max = Math.max(max, getVisibleLength(row[i] ?? ''));
     }
     return max;
   });
@@ -454,7 +467,7 @@ function renderTable(tableLines: string[]): string {
   // Header row: │ H1  │ H2  │
   const headerLine =
     bord('│') +
-    headerRow
+    headerRowTransformed
       .map((cell, i) => head(padCell(cell, colWidths[i], alignments[i] ?? 'left')))
       .join(bord('│')) +
     bord('│');
@@ -466,7 +479,7 @@ function renderTable(tableLines: string[]): string {
     bord('┤');
 
   // Data rows: │ D1  │ D2  │
-  const dataLines = normDataRows.map(
+  const dataLines = normDataRowsTransformed.map(
     (row) =>
       bord('│') +
       row

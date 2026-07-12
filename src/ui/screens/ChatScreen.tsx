@@ -187,9 +187,9 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Messa
             <Box flexDirection="row">
               <Text color="#7aa2f7" bold>● Thinking Process</Text>
             </Box>
-            <Box marginLeft={1} flexShrink={1} flexGrow={1}>
-              <Text color="gray" italic wrap="wrap">{msg.reasoning_content}</Text>
-            </Box>
+             <Box marginLeft={1} flexShrink={1} flexGrow={1}>
+               <Text color={theme.darkMode ? '#80d4ff' : '#2a4365'} italic wrap="wrap">{msg.reasoning_content}</Text>
+             </Box>
           </Box>
         )}
 
@@ -370,7 +370,7 @@ const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: st
             <Text color="#7aa2f7" bold>● Thinking Process</Text>
           </Box>
           <Box marginLeft={1}>
-            <Text color="gray" italic>{reasoning}</Text>
+            <Text color={theme.darkMode ? '#80d4ff' : '#2a4365'} italic>{reasoning}</Text>
           </Box>
         </Box>
       )}

@@ -194,7 +194,7 @@ export const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({ startTime,
   );
 };
 
-const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Message, idx: number, isActive: boolean, allMessages: Message[], isMobile: boolean }) => {
+const MessageItem = ({ msg, idx, isActive, allMessages, isMobile, isUltraCompact }: { msg: Message, idx: number, isActive: boolean, allMessages: Message[], isMobile: boolean, isUltraCompact: boolean }) => {
   const theme = themeManager.getCurrentTheme();
 
   if (msg.role === 'system') return null;
@@ -214,12 +214,12 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Messa
     };
 
     return (
-      <Box key={idx} flexDirection="column" marginY={isMobile ? 0.1 : 0.5} paddingLeft={2}>
+      <Box key={idx} flexDirection="column" marginY={isUltraCompact ? 0 : (isMobile ? 0.1 : 0.5)} paddingLeft={isUltraCompact ? 1 : 2}>
         <Box
           borderStyle={customBorder}
           borderColor={theme.primaryColor}
-          paddingLeft={2}
-          paddingY={isMobile ? 0 : 1}
+          paddingLeft={isUltraCompact ? 1 : 2}
+          paddingY={0}
         >
           <Text color={theme.primaryColor} wrap="wrap">{msg.content}</Text>
         </Box>
@@ -229,19 +229,30 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Messa
 
   if (msg.role === 'assistant') {
     const toolCalls = getToolCallsArray(msg.tool_calls);
+    const customLeftBorder = {
+      left: '│',
+      top: '',
+      right: '',
+      bottom: '',
+      topLeft: '',
+      topRight: '',
+      bottomLeft: '',
+      bottomRight: ''
+    };
+
     return (
       <Box 
         key={idx} 
         flexDirection="column" 
-        marginY={isMobile ? 0.1 : 0.5} 
-        paddingX={isMobile ? 1 : 2}
+        marginY={isUltraCompact ? 0 : (isMobile ? 0.1 : 0.5)} 
+        paddingX={isUltraCompact ? 1 : (isMobile ? 1 : 2)}
         paddingTop={0}
-        paddingBottom={isMobile ? 0 : 1}
-        borderStyle="round"
+        paddingBottom={isUltraCompact ? 0 : (isMobile ? 0.2 : 1)}
+        borderStyle={isUltraCompact ? customLeftBorder : "round"}
         borderColor={cardBorderColor}
       >
         {msg.reasoning_content && (
-          <Box flexDirection="column" marginY={isMobile ? 0.1 : 0.2} marginLeft={1}>
+          <Box flexDirection="column" marginY={0} marginLeft={1}>
             <Box flexDirection="row">
               <Text color="#7aa2f7" bold>● Thinking Process</Text>
             </Box>
@@ -252,7 +263,7 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Messa
         )}
 
         {msg.content ? (
-          <Box flexDirection="row" marginLeft={1}>
+          <Box flexDirection="row" marginLeft={1} marginTop={msg.reasoning_content && !isUltraCompact ? 0.5 : 0}>
             <Box marginRight={1}>
               <Text color={theme.accentColor} bold>●</Text>
             </Box>
@@ -404,7 +415,7 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Messa
   return null;
 };
 
-const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: string | null; isMobile: boolean }> = ({ startTime, activeToolName, isMobile }) => {
+const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: string | null; isMobile: boolean; isUltraCompact: boolean }> = ({ startTime, activeToolName, isMobile, isUltraCompact }) => {
   const theme = themeManager.getCurrentTheme();
   const [text, setText] = useState('');
   const [reasoning, setReasoning] = useState('');
@@ -421,19 +432,29 @@ const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: st
   }, []);
 
   const cardBorderColor = theme.darkMode ? '#3b4261' : '#cbd5e1';
+  const customLeftBorder = {
+    left: '│',
+    top: '',
+    right: '',
+    bottom: '',
+    topLeft: '',
+    topRight: '',
+    bottomLeft: '',
+    bottomRight: ''
+  };
 
   return (
     <Box 
       flexDirection="column" 
-      marginY={isMobile ? 0.1 : 0.5} 
-      paddingX={isMobile ? 1 : 2}
+      marginY={isUltraCompact ? 0 : (isMobile ? 0.1 : 0.5)} 
+      paddingX={isUltraCompact ? 1 : (isMobile ? 1 : 2)}
       paddingTop={0}
-      paddingBottom={isMobile ? 0 : 1}
-      borderStyle="round"
+      paddingBottom={isUltraCompact ? 0 : (isMobile ? 0.2 : 1)}
+      borderStyle={isUltraCompact ? customLeftBorder : "round"}
       borderColor={cardBorderColor}
     >
       {reasoning && (
-        <Box flexDirection="column" marginY={isMobile ? 0.1 : 0.2} marginLeft={1}>
+        <Box flexDirection="column" marginY={0} marginLeft={1}>
           <Box flexDirection="row">
             <Text color="#7aa2f7" bold>● Thinking Process</Text>
           </Box>
@@ -458,16 +479,18 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ messages, state }) => {
   const { stdout } = useStdout();
   const rows = stdout?.rows || 24;
   const isMobile = rows < 18;
+  const isUltraCompact = rows < 15;
   
   return (
     <Box flexDirection="column" paddingX={0} marginY={0} width="100%">
       <Static items={messages}>
-        {(msg, idx) => <MessageItem key={idx} msg={msg} idx={idx} isActive={false} allMessages={messages} isMobile={isMobile} />}
+        {(msg, idx) => <MessageItem key={idx} msg={msg} idx={idx} isActive={false} allMessages={messages} isMobile={isMobile} isUltraCompact={isUltraCompact} />}
       </Static>
 
       {(state.isStreaming || state.activeToolName) && (
-        <StreamingResponse startTime={state.streamingStartTime} activeToolName={state.activeToolName} isMobile={isMobile} />
+        <StreamingResponse startTime={state.streamingStartTime} activeToolName={state.activeToolName} isMobile={isMobile} isUltraCompact={isUltraCompact} />
       )}
     </Box>
   );
 };
+

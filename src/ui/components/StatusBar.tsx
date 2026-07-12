@@ -14,16 +14,24 @@ export const StatusBar: React.FC<StatusBarProps> = ({ state }) => {
   const { stdout } = useStdout();
   const rows = stdout?.rows || 24;
   
+  const isMobile = rows < 18;
+
   // Get short workspace name
-  const workspaceName = state.workspacePath 
+  let workspaceName = state.workspacePath 
     ? path.basename(state.workspacePath) || state.workspacePath
     : 'no-workspace';
+  if (isMobile && workspaceName.length > 12) {
+    workspaceName = workspaceName.slice(0, 10) + '..';
+  }
 
   const gitDisplay = state.gitBranch ? ` \u{E725} ${state.gitBranch}` : '';
-  const modelDisplay = state.activeModelId || 'No Model';
-  const toolDisplay = state.activeToolName ? ` \u{F013} ${state.activeToolName}...` : '';
+  
+  let modelDisplay = state.activeModelId || 'No Model';
+  if (isMobile && modelDisplay.length > 15) {
+    modelDisplay = modelDisplay.slice(0, 12) + '...';
+  }
 
-  const isMobile = rows < 18;
+  const toolDisplay = state.activeToolName ? ` \u{F013} ${state.activeToolName}...` : '';
 
   if (isMobile) {
     return (

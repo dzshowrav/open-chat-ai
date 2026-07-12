@@ -68,6 +68,7 @@ export const App: React.FC = () => {
   const { stdout } = useStdout();
   const rows = stdout?.rows || 24;
   const isMobile = rows < 18;
+  const isUltraCompact = rows < 15;
 
   const activeAbortController = React.useRef<AbortController | null>(null);
   const lastEscPress = React.useRef<number>(0);
@@ -1126,7 +1127,7 @@ export const App: React.FC = () => {
       <Box flexDirection="column">
         {isMobile ? (
           <Box flexDirection="column">
-            <Text color="gray">{"─".repeat(stdout?.columns || 80)}</Text>
+            {!isUltraCompact && <Text color="gray">{"─".repeat(stdout?.columns || 80)}</Text>}
             <Box flexDirection="row" paddingX={1} marginY={0}>
               <Text color={theme.accentColor} bold>&gt; </Text>
               {renderPromptPreview(prompt)}

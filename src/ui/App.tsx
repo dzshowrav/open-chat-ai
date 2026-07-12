@@ -39,7 +39,7 @@ import { ContextBuilder } from '../core/contextBuilder.js';
 import { ToolManager } from '../tools/toolManager.js';
 import { executeToolCalls, buildApiMessages, getToolNiceName, getToolTargetDisplay } from '../core/contentBlocks.js';
 
-const renderPromptPreview = (text: string) => {
+const renderPromptPreview = (text: string, cursorIdx: number) => {
   if (!text) {
     return <Text color="gray">Ask AI anything... (Type / for commands)</Text>;
   }
@@ -60,7 +60,17 @@ const renderPromptPreview = (text: string) => {
     );
   }
 
-  return <Text wrap="wrap">{text}</Text>;
+  // Show cursor with a block character
+  const before = text.slice(0, cursorIdx);
+  const at = text[cursorIdx] || ' ';
+  const after = text.slice(cursorIdx + 1);
+  return (
+    <Text wrap="wrap">
+      {before}
+      <Text backgroundColor="#555555" color="white">{at}</Text>
+      {after}
+    </Text>
+  );
 };
 
 export const App: React.FC = () => {
@@ -84,6 +94,7 @@ export const App: React.FC = () => {
   // Sync stateManager State with local React State
   const [state, setState] = useState<AppState>(stateManager.getState());
   const [prompt, setPrompt] = useState('');
+  const [cursorPos, setCursorPos] = useState(0); // cursor position in prompt
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -239,6 +250,7 @@ export const App: React.FC = () => {
 
     if (key.ctrl && input === 'u') {
       setPrompt('');
+      setCursorPos(0);
       return;
     }
 
@@ -249,14 +261,16 @@ export const App: React.FC = () => {
     }
 
     if (key.ctrl && input === 'w') {
-      // Delete last word (Ctrl+W)
+      // Delete word before cursor (Ctrl+W)
       setPrompt(prev => {
-        const trimmed = prev.trimEnd();
+        if (cursorPos <= 0) return prev;
+        const before = prev.slice(0, cursorPos);
+        const after = prev.slice(cursorPos);
+        const trimmed = before.trimEnd();
         const lastSpace = trimmed.lastIndexOf(' ');
-        if (lastSpace === -1) {
-          return '';
-        }
-        return prev.slice(0, lastSpace + 1);
+        const wordStart = lastSpace === -1 ? 0 : lastSpace + 1;
+        setCursorPos(wordStart);
+        return prev.slice(0, wordStart) + after;
       });
       return;
     }
@@ -300,11 +314,26 @@ export const App: React.FC = () => {
 
     if (key.backspace || key.delete) {
       setPrompt(prev => {
-        const next = prev.slice(0, -1);
+        if (cursorPos <= 0) return prev;
+        const next = prev.slice(0, cursorPos - 1) + prev.slice(cursorPos);
+        setCursorPos(cursorPos - 1);
         if (showCommandPalette && next === '') setShowCommandPalette(false);
         return next;
       });
       return;
+    }
+
+    // Arrow keys — move cursor position
+    if (key.leftArrow) {
+      setCursorPos(prev => Math.max(0, prev - 1));
+      return;
+    }
+    if (key.rightArrow) {
+      setCursorPos(prev => Math.min(prompt.length, prev + 1));
+      return;
+    }
+    if (key.upArrow || key.downArrow) {
+      return; // Consume but do nothing (no history yet)
     }
 
     if (input && !key.ctrl && !key.meta) {
@@ -313,7 +342,8 @@ export const App: React.FC = () => {
         setShowCommandPalette(true);
       }
       const cleanInput = input.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-      setPrompt(prev => prev + cleanInput);
+      setPrompt(prev => prev.slice(0, cursorPos) + cleanInput + prev.slice(cursorPos));
+      setCursorPos(prev => prev + cleanInput.length);
     }
   });
 
@@ -325,6 +355,7 @@ export const App: React.FC = () => {
     if (trimmed.startsWith('/')) {
       executeSlashCommand(trimmed);
       setPrompt('');
+      setCursorPos(0);
       return;
     }
 
@@ -332,6 +363,7 @@ export const App: React.FC = () => {
     if (!state.activeProviderId || !state.activeModelId) {
       stateManager.setState({ errorMsg: 'Error: No active AI model or provider configured.' });
       setPrompt('');
+      setCursorPos(0);
       return;
     }
 
@@ -362,6 +394,7 @@ export const App: React.FC = () => {
     // Update screen history
     setMessages(sessionRepo.getMessages(sessionId));
     setPrompt('');
+    setCursorPos(0);
 
     // Trigger AI Chat call (Simulated completion trigger for validation)
     triggerAiCompletion(sessionId, trimmed);
@@ -1117,15 +1150,13 @@ export const App: React.FC = () => {
             {!isUltraCompact && <Text color="gray">{"─".repeat(stdout?.columns || 80)}</Text>}
             <Box flexDirection="row" paddingX={1} marginY={0}>
               <Text color={theme.accentColor} bold>&gt; </Text>
-              {renderPromptPreview(prompt)}
-              <Text color="cyan">█</Text>
+              {renderPromptPreview(prompt, cursorPos)}
             </Box>
           </Box>
         ) : (
           <Box flexDirection="row" borderStyle="single" borderColor={theme.accentColor} paddingX={1} marginY={0.5}>
             <Text color={theme.accentColor} bold>&gt; </Text>
-            {renderPromptPreview(prompt)}
-            <Text color="cyan">█</Text>
+            {renderPromptPreview(prompt, cursorPos)}
           </Box>
         )}
         <StatusBar state={state} />

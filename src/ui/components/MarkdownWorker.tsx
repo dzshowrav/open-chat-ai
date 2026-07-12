@@ -210,7 +210,7 @@ export const MarkdownWorker: React.FC<MarkdownWorkerProps> = ({
     };
   }, [content, isStreaming, scheduleRender, columns]);
 
-  return <Text>{rendered}</Text>;
+  return <Text wrap="wrap">{rendered}</Text>;
 };
 
 /**

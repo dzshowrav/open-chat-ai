@@ -168,8 +168,12 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Messa
   if (msg.role === 'user') {
     return (
       <Box key={idx} flexDirection="row" marginY={isMobile ? 0.1 : 0.5}>
-        <Text color={theme.primaryColor} bold>&gt; </Text>
-        <Text color={theme.primaryColor}>{msg.content}</Text>
+        <Box marginRight={1}>
+          <Text color={theme.primaryColor} bold>&gt;</Text>
+        </Box>
+        <Box flexShrink={1} flexGrow={1}>
+          <Text color={theme.primaryColor} wrap="wrap">{msg.content}</Text>
+        </Box>
       </Box>
     );
   }
@@ -183,23 +187,27 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile }: { msg: Messa
             <Box flexDirection="row">
               <Text color="#7aa2f7" bold>● Thinking Process</Text>
             </Box>
-            <Box marginLeft={1}>
-              <Text color="#a9b1d6" italic>{msg.reasoning_content}</Text>
+            <Box marginLeft={1} flexShrink={1} flexGrow={1}>
+              <Text color="#a9b1d6" italic wrap="wrap">{msg.reasoning_content}</Text>
             </Box>
           </Box>
         )}
 
         {msg.content ? (
           <Box flexDirection="row" marginLeft={1}>
-            <Box flexDirection="row" marginRight={1}>
-              <Text color={theme.accentColor} bold>● </Text>
+            <Box marginRight={1}>
+              <Text color={theme.accentColor} bold>●</Text>
             </Box>
-            <MarkdownWorker content={msg.content} isStreaming={isActive} />
+            <Box flexShrink={1} flexGrow={1}>
+              <MarkdownWorker content={msg.content} isStreaming={isActive} />
+            </Box>
           </Box>
         ) : (
           !msg.reasoning_content && (
             <Box flexDirection="row" marginLeft={1}>
-              <Text color={theme.accentColor} bold>● </Text>
+              <Box marginRight={1}>
+                <Text color={theme.accentColor} bold>●</Text>
+              </Box>
               <ThinkingIndicator startTime={(msg as any).startTime} isActive={isActive} />
             </Box>
           )

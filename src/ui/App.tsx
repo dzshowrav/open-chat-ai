@@ -59,7 +59,7 @@ const renderPromptPreview = (text: string) => {
     );
   }
 
-  return <Text>{text}</Text>;
+  return <Text wrap="wrap">{text}</Text>;
 };
 
 export const App: React.FC = () => {

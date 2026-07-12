@@ -1,6 +1,6 @@
 {
   "name": "openchat-ai",
-  "version": "1.4.0",
+  "version": "1.3.2",
   "description": "A Universal OpenAI-Compatible AI Coding Agent for Termux",
   "main": "dist/index.js",
   "bin": {

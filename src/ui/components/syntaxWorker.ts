@@ -562,7 +562,9 @@ function processMarkdown(text: string, id: string, partial: boolean): ProcessRes
     .replace(/\r\n/g, '\n')                              // Normalize CRLF to LF
     .replace(/\r/g, '\n')                                // Normalize old CR to LF
     .replace(/\0/g, '')                                  // Strip null bytes
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ''); // Strip control chars
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')    // Strip control chars
+    .replace(/\p{Extended_Pictographic}/gu, '')          // Strip all unicode emojis
+    .replace(/:[a-zA-Z_0-9]+:/g, '');                    // Strip all emoji shortcodes like :wave:
 
   const rawLines = cleanText.split('\n');
   const lines: string[] = [];

@@ -46,21 +46,9 @@ To make your responses highly readable, clean, and beautifully stylized in the t
 - Code Blocks & File Diffs:
   • Code blocks: Always specify the language name for syntax highlighting (e.g. \`\`\`javascript, \`\`\`typescript, \`\`\`bash, \`\`\`json, \`\`\`css).
   • Diffs: When explaining specific edits in a file instead of full files, use the \`\`\`diff block syntax. Put '+' at the start of added lines, '-' for deleted lines, and '@@' for chunk headers.
-- Emoji Shortcodes (Highly Recommended):
-  • Instead of pasting unicode emojis, use standard emoji shortcodes to let our CLI rendering engine translate them into high-contrast colored icons:
-    • ':check_mark:' or ':white_check_mark:' for completed items (rendered as ✅ or ✔)
-    • ':x:' for errors, failures, or blockers (rendered as ❌)
-    • ':warning:' for warnings, caveats, or checkups (rendered as ⚠️)
-    • ':hourglass_flowing_sand:' or ':hourglass:' for processes in progress (rendered as ⏳)
-    • ':rocket:' for launches, builds, deployments, or speed improvements (rendered as 🚀)
-    • ':bulb:' for ideas, tips, or helpful shortcuts (rendered as 💡)
-    • ':bug:' for issues or bug investigations (rendered as 🐛)
-    • ':wrench:' for config changes or adjustments (rendered as 🔧)
-    • ':tools:' or ':hammer_and_wrench:' for installations, scripting, or setup (rendered as 🛠️)
-    • ':memo:' for notes, docs, or planning summaries (rendered as 📝)
-    • ':dart:' or ':goal:' for goals, milestones, or objectives (rendered as 🎯)
-    • ':package:' for releasing or bundling packages (rendered as 📦)
-    • ':test_tube:' for test runs, assertions, or validations (rendered as 🧪)
+- Emojis & Shortcodes (Strictly Prohibited):
+  • NEVER use any unicode emojis (e.g. ✅, 🚀, 💡, 📝, 🎯) or emoji shortcodes (e.g. :check_mark:, :wave:, :warning:, :rocket:, :bulb:) in your responses.
+  • Keep the output clean, professional, and strictly text-only. Do not include any graphical icons or shortcodes in headings, tables, lists, or paragraphs.
 - Collapsible details:
   • Wrap long diagnostic logs, shell outputs, or detailed stack traces in <details><summary>Click to expand</summary>...Content...</details> blocks to avoid cluttering the chat view.
 `;

@@ -99,6 +99,9 @@ export const App: React.FC = () => {
   cursorPromptLen.current = prompt.length;
   const enterTimerRef = useRef<any>(null); // long-press Enter detection timer id
   const enterCancelledRef = useRef(false);
+  // Paste batching: accumulates rapid chars and flushes after 20ms silence
+  const pasteBufRef = useRef('');
+  const pasteTimerRef = useRef<any>(null);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -205,6 +208,20 @@ export const App: React.FC = () => {
     };
   }, []);
 
+  // Flush accumulated paste buffer — call before any state-changing action
+  const flushPasteBuffer = () => {
+    if (pasteTimerRef.current) {
+      clearTimeout(pasteTimerRef.current);
+      pasteTimerRef.current = null;
+    }
+    if (pasteBufRef.current) {
+      const buf = pasteBufRef.current;
+      pasteBufRef.current = '';
+      setPrompt(prev => prev.slice(0, cursorPos) + buf + prev.slice(cursorPos));
+      setCursorPos(prev => prev + buf.length);
+    }
+  };
+
   // Main UI Keyboard listener
   useInput((input: string, key: any) => {
     if (state.errorMsg) {
@@ -265,18 +282,21 @@ export const App: React.FC = () => {
     }
 
     if (key.ctrl && input === 'u') {
+      flushPasteBuffer();
       setPrompt('');
       setCursorPos(0);
       return;
     }
 
     if (key.ctrl && input === 'l') {
+      flushPasteBuffer();
       // Clear terminal screen
       process.stdout.write('\x1b[2J\x1b[H');
       return;
     }
 
     if (key.ctrl && input === 'w') {
+      flushPasteBuffer();
       // Delete word before cursor (Ctrl+W)
       setPrompt(prev => {
         if (cursorPos <= 0) return prev;
@@ -302,6 +322,7 @@ export const App: React.FC = () => {
     }
 
     if (key.return) {
+      flushPasteBuffer();
       if (key.shift || key.ctrl) {
         // Shift+Enter / Ctrl+Enter submits
         if (enterTimerRef.current) {
@@ -345,6 +366,7 @@ export const App: React.FC = () => {
     }
 
     if (key.backspace || key.delete) {
+      flushPasteBuffer();
       setPrompt(prev => {
         if (cursorPos <= 0) return prev;
         const next = prev.slice(0, cursorPos - 1) + prev.slice(cursorPos);
@@ -379,9 +401,15 @@ export const App: React.FC = () => {
         if (state.currentScreen === 'home') process.stdout.write('\x1b[2J\x1b[H');
         setShowCommandPalette(true);
       }
+      // Accumulate in paste buffer — flush after 20ms of silence
+      // Fast chars (paste) → batch into one setPrompt call
+      // Slow chars (typing) → each flushes individually after 20ms
       const cleanInput = input.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-      setPrompt(prev => prev.slice(0, cursorPos) + cleanInput + prev.slice(cursorPos));
-      setCursorPos(prev => prev + cleanInput.length);
+      pasteBufRef.current += cleanInput;
+      if (pasteTimerRef.current) clearTimeout(pasteTimerRef.current);
+      pasteTimerRef.current = setTimeout(() => {
+        flushPasteBuffer();
+      }, 20);
     }
   });
 

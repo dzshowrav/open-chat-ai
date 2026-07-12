@@ -422,15 +422,15 @@ export const App: React.FC = () => {
       return;
     }
     if (key.upArrow) {
+      // VISIBLE DEBUG: up = jump to start
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
-      // Temporary: move up like left arrow to test if Ink receives events
-      setCursorPos(prev => Math.max(0, prev - 1));
+      setCursorPos(0);
       return;
     }
     if (key.downArrow) {
+      // VISIBLE DEBUG: down = jump to end
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
-      // Temporary: move down like right arrow to test if Ink receives events
-      setCursorPos(prev => Math.min(cursorPromptLen.current, prev + 1));
+      setCursorPos(cursorPromptLen.current);
       return;
     }
 

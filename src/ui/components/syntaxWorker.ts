@@ -189,28 +189,73 @@ function highlightDiff(code: string, columns: number = terminalColumns): string 
     .join('\n');
 }
 
-// ─── Box-drawing header for code blocks ──────────────────────────────────────
+// ─── Language Icon Mapper (Nerd Font Glyphs) ──────────────────────────────────
+function getLanguageIcon(lang: string): string {
+  const lower = lang.toLowerCase().trim();
+  switch (lower) {
+    case 'javascript':
+    case 'js':
+    case 'jsx':
+      return '';
+    case 'typescript':
+    case 'ts':
+    case 'tsx':
+      return '';
+    case 'python':
+    case 'py':
+      return '';
+    case 'html':
+      return '';
+    case 'css':
+      return '';
+    case 'json':
+      return '';
+    case 'rust':
+    case 'rs':
+      return '';
+    case 'bash':
+    case 'sh':
+    case 'zsh':
+      return '';
+    case 'markdown':
+    case 'md':
+      return '';
+    case 'sql':
+      return '';
+    case 'yaml':
+    case 'yml':
+      return '';
+    default:
+      return '󰅩';
+  }
+}
+
+// ─── Header Bar for code blocks (Web App style) ──────────────────────────────────
 function renderCodeBlockHeader(lang: string, columns: number = terminalColumns): string {
   const label = lang ? lang.toUpperCase() : 'CODE';
+  const icon = getLanguageIcon(lang);
   const width = Math.max(20, Math.min(columns - 4, 80));
-  const bar = '─'.repeat(Math.max(0, width - label.length - 5));
-  return c.hex('#3d59a1')(`╭─ ${label} ${bar}╮`);
+  
+  const displayText = `  ${icon}  ${label} `;
+  const copyText = ` [Copy: /copy]  `;
+  const padLength = Math.max(0, width - getVisibleLength(displayText) - getVisibleLength(copyText));
+  const fullHeader = displayText + ' '.repeat(padLength) + copyText;
+  
+  return c.bgHex('#2e303e').hex('#c0caf5').bold(fullHeader);
 }
 
 function renderCodeBlockFooter(columns: number = terminalColumns): string {
   const width = Math.max(20, Math.min(columns - 4, 80));
-  return c.hex('#3d59a1')('╰' + '─'.repeat(width - 2) + '╯');
+  return c.bgHex('#2e303e')(' '.repeat(width));
 }
 
-// ─── Box-drawing body wrapper for code blocks ───────────────────────────────
+// ─── Code body wrapper (Solid Background Card style) ───────────────────────────
 function renderCodeBlockLines(highlightedCode: string, columns: number = terminalColumns): string {
   const width = Math.max(20, Math.min(columns - 4, 80));
-  const insideWidth = width - 4; // leave room for borders "│ " and " │"
+  const insideWidth = width - 4; // leave 2 chars padding on left and 2 on right
   const lines = highlightedCode.split('\n');
   const showLineNums = lines.length >= 4;
   const widthPadding = showLineNums ? String(lines.length).length : 0;
-
-  const bord = (s: string) => c.hex('#3d59a1')(s);
 
   return lines
     .map((line, i) => {
@@ -223,10 +268,10 @@ function renderCodeBlockLines(highlightedCode: string, columns: number = termina
       const visibleLen = getVisibleLength(lineWithNum);
       if (visibleLen > insideWidth) {
         const truncated = truncateAnsi(lineWithNum, insideWidth);
-        return bord('│ ') + truncated + bord(' │');
+        return c.bgHex('#1e1f29')(`  ${truncated}  `);
       } else {
         const pad = ' '.repeat(insideWidth - visibleLen);
-        return bord('│ ') + lineWithNum + pad + bord(' │');
+        return c.bgHex('#1e1f29')(`  ${lineWithNum}${pad}  `);
       }
     })
     .join('\n');

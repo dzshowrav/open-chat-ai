@@ -214,7 +214,13 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile, isUltraCompact
     };
 
     return (
-      <Box key={idx} flexDirection="column" marginY={isUltraCompact ? 0 : (isMobile ? 0.1 : 0.5)} paddingLeft={isUltraCompact ? 1 : 2}>
+      <Box 
+        key={idx} 
+        flexDirection="column" 
+        marginTop={isUltraCompact ? 0 : (isMobile ? 0.1 : 0.5)} 
+        marginBottom={0} 
+        paddingLeft={isUltraCompact ? 1 : 2}
+      >
         <Box
           borderStyle={customBorder}
           borderColor={theme.primaryColor}
@@ -244,7 +250,8 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile, isUltraCompact
       <Box 
         key={idx} 
         flexDirection="column" 
-        marginY={isUltraCompact ? 0 : (isMobile ? 0.1 : 0.5)} 
+        marginTop={isUltraCompact ? 0 : (isMobile ? 0.1 : 0.5)} 
+        marginBottom={0} 
         paddingLeft={1}
         paddingRight={1}
         paddingTop={0}
@@ -447,7 +454,8 @@ const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: st
   return (
     <Box 
       flexDirection="column" 
-      marginY={isUltraCompact ? 0 : (isMobile ? 0.1 : 0.5)} 
+      marginTop={isUltraCompact ? 0 : (isMobile ? 0.1 : 0.5)} 
+      marginBottom={0} 
       paddingLeft={1}
       paddingRight={1}
       paddingTop={0}

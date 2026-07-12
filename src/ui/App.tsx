@@ -39,23 +39,21 @@ import { ContextBuilder } from '../core/contextBuilder.js';
 import { ToolManager } from '../tools/toolManager.js';
 import { executeToolCalls, buildApiMessages, getToolNiceName, getToolTargetDisplay } from '../core/contentBlocks.js';
 
-const renderPromptPreview = (text: string, cursorIdx: number) => {
+const renderPromptPreview = (text: string, cursorIdx: number, pasteDetected: boolean) => {
   if (!text) {
     return <Text color="gray">Ask AI anything... (Type / for commands)</Text>;
   }
 
   const lines = text.split('\n');
   const isMultiLine = lines.length > 1;
-  const isVeryLong = text.length > 300;
+  const isVeryLong = text.length > 1000;
 
-  if (isMultiLine || isVeryLong) {
+  // Show compact preview only when paste was just detected AND text is large
+  if (pasteDetected && (isMultiLine || isVeryLong)) {
     const linesCount = lines.length;
-    const charCount = text.length;
-    const firstLine = lines[0].trim();
-    const previewText = firstLine.length > 30 ? firstLine.slice(0, 30) + '...' : firstLine;
     return (
       <Text color="cyan" bold>
-        [pasted text: <Text italic>"{previewText}"</Text> | +{linesCount - 1} lines, {charCount} chars]
+        [Pasted ~{Math.max(1, linesCount)} lines]
       </Text>
     );
   }
@@ -102,6 +100,7 @@ export const App: React.FC = () => {
   // Paste batching: accumulates rapid chars and flushes after 20ms silence
   const pasteBufRef = useRef('');
   const pasteTimerRef = useRef<any>(null);
+  const pasteDetectedRef = useRef(false); // true right after a paste, cleared on next typing
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -217,6 +216,8 @@ export const App: React.FC = () => {
     if (pasteBufRef.current) {
       const buf = pasteBufRef.current;
       pasteBufRef.current = '';
+      // Multiple chars accumulated = paste; single char = typing
+      pasteDetectedRef.current = buf.length > 3;
       setPrompt(prev => prev.slice(0, cursorPos) + buf + prev.slice(cursorPos));
       setCursorPos(prev => prev + buf.length);
     }
@@ -1216,13 +1217,13 @@ export const App: React.FC = () => {
             {!isUltraCompact && <Text color="gray">{"─".repeat(stdout?.columns || 80)}</Text>}
             <Box flexDirection="row" paddingX={1} marginY={0}>
               <Text color={theme.accentColor} bold>&gt; </Text>
-              {renderPromptPreview(prompt, cursorPos)}
+              {renderPromptPreview(prompt, cursorPos, pasteDetectedRef.current)}
             </Box>
           </Box>
         ) : (
           <Box flexDirection="row" borderStyle="single" borderColor={theme.accentColor} paddingX={1} marginY={0.5}>
             <Text color={theme.accentColor} bold>&gt; </Text>
-            {renderPromptPreview(prompt, cursorPos)}
+            {renderPromptPreview(prompt, cursorPos, pasteDetectedRef.current)}
           </Box>
         )}
         <StatusBar state={state} />

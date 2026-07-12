@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Text, useInput, useApp, useStdout } from 'ink';
+import fs from 'node:fs';
 import { stateManager, AppState } from '../core/state.js';
 import { AppEngine } from '../core/engine.js';
 import { eventBus } from '../core/events.js';
@@ -242,6 +243,11 @@ export const App: React.FC = () => {
 
   // Main UI Keyboard listener
   useInput((input: string, key: any) => {
+    // Debug: log every key event
+    try { fs.appendFileSync('/storage/emulated/0/htdocs/open-chat/key-debug.log',
+      `input=${JSON.stringify(input)} up=${!!key.upArrow} down=${!!key.downArrow} left=${!!key.leftArrow} right=${!!key.rightArrow} ret=${!!key.return} esc=${!!key.escape} ctrl=${!!key.ctrl} meta=${!!key.meta} promptLen=${prompt.length} cursor=${cursorPos}\n`);
+    } catch(e) {}
+
     if (state.errorMsg) {
       if (key.escape || key.return) stateManager.setState({ errorMsg: null });
       return;
@@ -422,15 +428,31 @@ export const App: React.FC = () => {
       return;
     }
     if (key.upArrow) {
-      // VISIBLE DEBUG: up = jump to start
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
-      setCursorPos(0);
+      const before = prompt.slice(0, cursorPos);
+      const prevNl = before.lastIndexOf('\n');
+      if (prevNl !== -1) {
+        const col = cursorPos - prevNl - 1;
+        const beforePrev = before.slice(0, prevNl);
+        const prevLineStart = beforePrev.lastIndexOf('\n') + 1;
+        const prevLineLen = prevNl - prevLineStart;
+        setCursorPos(prevLineStart + Math.min(col, prevLineLen));
+      }
       return;
     }
     if (key.downArrow) {
-      // VISIBLE DEBUG: down = jump to end
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
-      setCursorPos(cursorPromptLen.current);
+      const after = prompt.slice(cursorPos);
+      const nextNl = after.indexOf('\n');
+      if (nextNl !== -1) {
+        const curLineStart = prompt.slice(0, cursorPos).lastIndexOf('\n') + 1;
+        const col = cursorPos - curLineStart;
+        const nextLineStart = cursorPos + nextNl + 1;
+        const afterNext = prompt.slice(nextLineStart);
+        const nextLineEnd = afterNext.indexOf('\n');
+        const nextLineLen = nextLineEnd === -1 ? afterNext.length : nextLineEnd;
+        setCursorPos(nextLineStart + Math.min(col, nextLineLen));
+      }
       return;
     }
 

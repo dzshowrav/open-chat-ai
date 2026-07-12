@@ -163,7 +163,13 @@ export const MarkdownWorker: React.FC<MarkdownWorkerProps> = ({
   const scheduleRender = useCallback(
     (text: string, partial: boolean, version: number, cols: number) => {
       const theme = themeManager.getCurrentTheme();
-      const themeColors = { primary: theme.primaryColor, accent: theme.accentColor };
+      const themeColors = { 
+        primary: theme.primaryColor, 
+        accent: theme.accentColor,
+        textColor: theme.textColor,
+        backgroundColor: theme.backgroundColor,
+        darkMode: theme.darkMode
+      };
       renderAsync(text, partial, themeColors, cols).then((result) => {
         // Only apply if we're still on the same version (content hasn't changed)
         if (version === contentVersion.current) {

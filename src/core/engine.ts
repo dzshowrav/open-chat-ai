@@ -150,29 +150,115 @@ export class AppEngine {
     }
   }
 
-  async updateToLatest(): Promise<boolean> {
+  async updateToLatest(): Promise<{ success: boolean; error?: string }> {
     const fs = await import('fs');
     const path = await import('path');
-    const exec = (await import('child_process')).exec;
+    const { exec } = await import('child_process');
 
     const hasGit = fs.existsSync(path.join(installRoot, '.git'));
 
-    return new Promise((resolve) => {
-      const command = hasGit
-        ? 'git checkout package-lock.json && git pull && npm install --no-bin-links && npm run build'
-        : 'npm install -g git+https://github.com/dzshowrav/open-chat-ai.git';
-
-      const execOptions = hasGit ? { cwd: installRoot } : {};
-
-      exec(command, execOptions, (error) => {
-        if (error) {
-          console.error(`Update error: ${error.message}`);
-          resolve(false);
-        } else {
-          resolve(true);
-        }
+    const runCommand = (cmd: string, cwd?: string): Promise<{ success: boolean; stdout: string; stderr: string; error?: string }> => {
+      return new Promise((resolve) => {
+        const env = {
+          ...process.env,
+          GIT_TERMINAL_PROMPT: '0',
+          GIT_EDITOR: 'true',
+          PAGER: 'cat'
+        };
+        
+        exec(cmd, { cwd, env, timeout: 180000 }, (error, stdout, stderr) => {
+          if (error) {
+            resolve({
+              success: false,
+              stdout: stdout || '',
+              stderr: stderr || '',
+              error: error.message
+            });
+          } else {
+            resolve({
+              success: true,
+              stdout: stdout || '',
+              stderr: stderr || ''
+            });
+          }
+        });
       });
-    });
+    };
+
+    if (hasGit) {
+      // 1. Detect branch name
+      let branch = 'master';
+      const branchRes = await runCommand('git symbolic-ref --short HEAD', installRoot);
+      if (branchRes.success && branchRes.stdout.trim()) {
+        branch = branchRes.stdout.trim();
+      }
+
+      // 2. Check for local modifications/untracked files
+      const statusRes = await runCommand('git status --porcelain', installRoot);
+      if (!statusRes.success) {
+        return { success: false, error: `Git status check failed: ${statusRes.error}` };
+      }
+
+      const hasLocalChanges = statusRes.stdout.trim().length > 0;
+      let stashed = false;
+
+      if (hasLocalChanges) {
+        // Stash local changes including untracked files
+        const stashRes = await runCommand('git stash -u -m "Auto-stash before update"', installRoot);
+        if (stashRes.success && !stashRes.stdout.includes('No local changes to save')) {
+          stashed = true;
+        }
+      }
+
+      // 3. Fetch latest changes
+      const fetchRes = await runCommand('git fetch origin', installRoot);
+      if (!fetchRes.success) {
+        if (stashed) await runCommand('git stash pop', installRoot);
+        return { success: false, error: `Git fetch failed: ${fetchRes.stderr || fetchRes.error}` };
+      }
+
+      // 4. Pull latest changes
+      const pullRes = await runCommand(`git pull --no-edit origin ${branch} || git pull --no-edit`, installRoot);
+      if (!pullRes.success) {
+        // If git pull failed, abort the merge in case it left a merging state and restore stash
+        await runCommand('git merge --abort', installRoot);
+        if (stashed) await runCommand('git stash pop', installRoot);
+        return { success: false, error: `Git pull failed: ${pullRes.stderr || pullRes.error}` };
+      }
+
+      // 5. Restore local changes (stash pop)
+      if (stashed) {
+        const popRes = await runCommand('git stash pop', installRoot);
+        if (!popRes.success) {
+          console.warn('Conflict occurred while restoring local changes. Please resolve manually.');
+        }
+      }
+
+      // 6. Install dependencies
+      const installRes = await runCommand('npm install --no-bin-links', installRoot);
+      if (!installRes.success) {
+        // Retry with legacy peer deps
+        const retryRes = await runCommand('npm install --no-bin-links --legacy-peer-deps', installRoot);
+        if (!retryRes.success) {
+          return { success: false, error: `Dependency installation failed: ${retryRes.stderr || retryRes.error}` };
+        }
+      }
+
+      // 7. Rebuild project
+      const buildRes = await runCommand('npm run build', installRoot);
+      if (!buildRes.success) {
+        return { success: false, error: `Build failed: ${buildRes.stderr || buildRes.error}` };
+      }
+
+      return { success: true };
+    } else {
+      // Non-git installation (global npm install)
+      const updateRes = await runCommand('npm install -g git+https://github.com/dzshowrav/open-chat-ai.git');
+      if (!updateRes.success) {
+        return { success: false, error: `Global npm update failed: ${updateRes.stderr || updateRes.error}` };
+      }
+      return { success: true };
+    }
   }
 
   async uninstall(): Promise<boolean> {

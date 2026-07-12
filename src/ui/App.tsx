@@ -435,17 +435,17 @@ export const App: React.FC = () => {
             stateManager.setState({ activeToolName: 'Updating OpenChat AI...' });
             
             const engine = new AppEngine();
-            const success = await engine.updateToLatest();
+            const result = await engine.updateToLatest();
             
             stateManager.setState({ activeToolName: null });
-            if (success) {
+            if (result.success) {
               stateManager.setState({ errorMsg: 'Update successful! Please restart OpenChat AI to apply changes.' });
               setTimeout(() => {
                 exit();
                 process.exit(0);
               }, 3000);
             } else {
-              stateManager.setState({ errorMsg: 'Update failed! Please check your network connection.' });
+              stateManager.setState({ errorMsg: `Update failed: ${result.error || 'Please check your network connection.'}` });
             }
           } else {
             setActiveDialog('none');

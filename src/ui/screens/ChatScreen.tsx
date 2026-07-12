@@ -218,7 +218,7 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile, isUltraCompact
         <Box
           borderStyle={customBorder}
           borderColor={theme.primaryColor}
-          paddingLeft={isMobile ? 1 : 2}
+          paddingLeft={1}
           paddingY={0}
         >
           <Text color={theme.primaryColor} wrap="wrap">{msg.content}</Text>
@@ -245,26 +245,26 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile, isUltraCompact
         key={idx} 
         flexDirection="column" 
         marginY={isUltraCompact ? 0 : (isMobile ? 0.1 : 0.5)} 
-        paddingLeft={isMobile ? 1 : 2}
-        paddingRight={isMobile ? 0 : 2}
+        paddingLeft={1}
+        paddingRight={1}
         paddingTop={0}
-        paddingBottom={isUltraCompact ? 0 : (isMobile ? 0.2 : 1)}
+        paddingBottom={1}
         borderStyle={isUltraCompact ? customLeftBorder : "round"}
         borderColor={cardBorderColor}
       >
         {msg.reasoning_content && (
-          <Box flexDirection="column" marginY={0} marginLeft={isMobile ? 0 : 1}>
+          <Box flexDirection="column" marginY={0} marginLeft={0}>
             <Box flexDirection="row">
               <Text color="#7aa2f7" bold>● Thinking Process</Text>
             </Box>
-            <Box marginLeft={isMobile ? 0 : 1} flexShrink={1} flexGrow={1}>
+            <Box marginLeft={1} flexShrink={1} flexGrow={1}>
               <Text color={theme.darkMode ? '#80d4ff' : '#2a4365'} italic wrap="wrap">{msg.reasoning_content}</Text>
             </Box>
           </Box>
         )}
 
         {msg.content ? (
-          <Box flexDirection="row" marginLeft={isMobile ? 0 : 1} marginTop={msg.reasoning_content && !isUltraCompact ? 0.5 : 0}>
+          <Box flexDirection="row" marginLeft={0} marginTop={msg.reasoning_content && !isUltraCompact ? 0.5 : 0}>
             <Box marginRight={1}>
               <Text color={theme.accentColor} bold>●</Text>
             </Box>
@@ -274,7 +274,7 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile, isUltraCompact
           </Box>
         ) : (
           !msg.reasoning_content && (
-            <Box flexDirection="row" marginLeft={isMobile ? 0 : 1}>
+            <Box flexDirection="row" marginLeft={0}>
               <Box marginRight={1}>
                 <Text color={theme.accentColor} bold>●</Text>
               </Box>
@@ -284,7 +284,7 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile, isUltraCompact
         )}
         
         {toolCalls.length > 0 && (
-          <Box flexDirection="column" marginLeft={isMobile ? 0 : 1} marginY={isMobile ? 0.1 : 0.2}>
+          <Box flexDirection="column" marginLeft={0} marginY={isMobile ? 0.1 : 0.2}>
             {toolCalls.map((call: any, cIdx: number) => {
               const funcName = call.function?.name || 'unknown';
               let argsObj: any = {};
@@ -448,26 +448,26 @@ const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: st
     <Box 
       flexDirection="column" 
       marginY={isUltraCompact ? 0 : (isMobile ? 0.1 : 0.5)} 
-      paddingLeft={isMobile ? 1 : 2}
-      paddingRight={isMobile ? 0 : 2}
+      paddingLeft={1}
+      paddingRight={1}
       paddingTop={0}
-      paddingBottom={isUltraCompact ? 0 : (isMobile ? 0.2 : 1)}
+      paddingBottom={1}
       borderStyle={isUltraCompact ? customLeftBorder : "round"}
       borderColor={cardBorderColor}
     >
       {reasoning && (
-        <Box flexDirection="column" marginY={0} marginLeft={isMobile ? 0 : 1}>
+        <Box flexDirection="column" marginY={0} marginLeft={0}>
           <Box flexDirection="row">
             <Text color="#7aa2f7" bold>● Thinking Process</Text>
           </Box>
-          <Box marginLeft={isMobile ? 0 : 1}>
+          <Box marginLeft={1}>
             <Text color={theme.darkMode ? '#80d4ff' : '#2a4365'} italic>{reasoning}</Text>
           </Box>
         </Box>
       )}
 
       {!reasoning && (
-        <Box flexDirection="row" marginLeft={isMobile ? 0 : 1}>
+        <Box flexDirection="row" marginLeft={0}>
           <Text color={theme.accentColor} bold>● </Text>
           <ThinkingIndicator startTime={startTime} isActive={true} activeToolName={activeToolName} />
         </Box>

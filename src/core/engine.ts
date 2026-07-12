@@ -159,7 +159,7 @@ export class AppEngine {
 
     return new Promise((resolve) => {
       const command = hasGit
-        ? 'git checkout package-lock.json && git pull && npm install && npm run build'
+        ? 'git checkout package-lock.json && git pull && npm install --no-bin-links && npm run build'
         : 'npm install -g git+https://github.com/dzshowrav/open-chat-ai.git';
 
       const execOptions = hasGit ? { cwd: installRoot } : {};

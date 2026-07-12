@@ -218,24 +218,26 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Flush accumulated paste buffer — call before any state-changing action
-  const flushPasteBuffer = () => {
+  // Flush accumulated paste buffer — returns count of chars flushed
+  const flushPasteBuffer = (): number => {
     if (pasteTimerRef.current) {
       clearTimeout(pasteTimerRef.current);
       pasteTimerRef.current = null;
     }
     if (pasteBufRef.current) {
       const buf = pasteBufRef.current;
+      const addedLen = buf.length;
       pasteBufRef.current = '';
-      // Set paste badge when multiple chars arrive rapidly (paste, not typing)
-      if (buf.length > 3) {
+      if (buf.length > 3 && !pasteDetectedRef.current) {
         pasteDetectedRef.current = true;
-        prePasteLenRef.current = cursorPromptLen.current; // prompt length before paste
-        pasteLenRef.current = buf.length; // length of pasted content
+        prePasteLenRef.current = cursorPromptLen.current;
+        pasteLenRef.current = buf.length;
       }
       setPrompt(prev => prev.slice(0, cursorPos) + buf + prev.slice(cursorPos));
       setCursorPos(prev => prev + buf.length);
+      return addedLen;
     }
+    return 0;
   };
 
   // Main UI Keyboard listener
@@ -287,12 +289,14 @@ export const App: React.FC = () => {
 
     if (key.ctrl && input === 'a') {
       // Ctrl+A — cursor to start (or paste boundary if badge is active)
+      flushPasteBuffer();
       setCursorPos(pasteDetectedRef.current ? prePasteLenRef.current : 0);
       return;
     }
 
     if (key.ctrl && input === 'e') {
       // Ctrl+E — cursor to end
+      flushPasteBuffer();
       setCursorPos(cursorPromptLen.current);
       return;
     }
@@ -385,18 +389,20 @@ export const App: React.FC = () => {
     }
 
     if (key.backspace || key.delete) {
-      flushPasteBuffer();
+      const added = flushPasteBuffer();
+      const actualCursor = cursorPos + added;
       const pasteEnd = prePasteLenRef.current + pasteLenRef.current;
       // Cursor anywhere in/at the paste region → delete entire pasted block as one unit
-      if (pasteDetectedRef.current && cursorPos >= prePasteLenRef.current && cursorPos <= pasteEnd) {
+      if (pasteDetectedRef.current && actualCursor >= prePasteLenRef.current && actualCursor <= pasteEnd) {
         pasteDetectedRef.current = false;
         setPrompt(prev => prev.slice(0, prePasteLenRef.current) + prev.slice(pasteEnd));
         setCursorPos(prePasteLenRef.current);
       } else {
+        // Normal single-char delete using actualCursor
         setPrompt(prev => {
-          if (cursorPos <= 0) return prev;
-          const next = prev.slice(0, cursorPos - 1) + prev.slice(cursorPos);
-          setCursorPos(cursorPos - 1);
+          if (actualCursor <= 0) return prev;
+          const next = prev.slice(0, actualCursor - 1) + prev.slice(actualCursor);
+          setCursorPos(actualCursor - 1);
           if (showCommandPalette && next === '') setShowCommandPalette(false);
           return next;
         });
@@ -406,29 +412,37 @@ export const App: React.FC = () => {
 
     // Arrow keys — move cursor position
     if (key.leftArrow) {
-      const pasteEnd = prePasteLenRef.current + pasteLenRef.current;
-      if (pasteDetectedRef.current && cursorPos === pasteEnd) {
-        // Jump over paste content to prePaste position
+      const addedLeft = flushPasteBuffer();
+      const actualCursor = cursorPos + addedLeft;
+      const pEnd = prePasteLenRef.current + pasteLenRef.current;
+      if (pasteDetectedRef.current && actualCursor > pEnd) {
+        // In suffix after paste → clamp at paste end
+        setCursorPos(pEnd);
+      } else if (pasteDetectedRef.current && actualCursor > prePasteLenRef.current && actualCursor <= pEnd) {
+        // At or inside paste content → jump to before paste
         setCursorPos(prePasteLenRef.current);
-      } else if (pasteDetectedRef.current && cursorPos > pasteEnd) {
-        setCursorPos(prev => Math.max(pasteEnd, prev - 1));
       } else {
         setCursorPos(prev => Math.max(0, prev - 1));
       }
       return;
     }
     if (key.rightArrow) {
-      const pasteEnd = prePasteLenRef.current + pasteLenRef.current;
-      if (pasteDetectedRef.current && cursorPos === prePasteLenRef.current) {
-        // Jump over paste content to pasteEnd position
-        setCursorPos(pasteEnd);
+      const addedRight = flushPasteBuffer();
+      const actualCursor = cursorPos + addedRight;
+      const pEnd = prePasteLenRef.current + pasteLenRef.current;
+      if (pasteDetectedRef.current && actualCursor < prePasteLenRef.current) {
+        // Before paste → jump over it
+        setCursorPos(pEnd);
+      } else if (pasteDetectedRef.current && actualCursor >= prePasteLenRef.current && actualCursor < pEnd) {
+        // At or inside paste → jump to after paste
+        setCursorPos(pEnd);
       } else {
         setCursorPos(prev => Math.min(cursorPromptLen.current, prev + 1));
       }
       return;
     }
     if (key.upArrow) {
-      // Move cursor up one line
+      flushPasteBuffer();
       if (pasteDetectedRef.current) return;
       const lines = prompt.split('\n');
       let charCount = 0;
@@ -446,7 +460,7 @@ export const App: React.FC = () => {
       return;
     }
     if (key.downArrow) {
-      // Move cursor down one line
+      flushPasteBuffer();
       if (pasteDetectedRef.current) return;
       const lines = prompt.split('\n');
       let charCount = 0;

@@ -48,18 +48,22 @@ const renderPromptPreview = (text: string, cursorIdx: number, pasteDetected: boo
   const isMultiLine = lines.length > 1;
   const isVeryLong = text.length > 1000;
 
-  // Paste badge active: show [Pasted ~N lines] + only user-typed suffix
+  // Paste badge active: show prefix + [Pasted ~N lines] + user-typed suffix
   if (pasteDetected && (isMultiLine || isVeryLong)) {
-    const linesCount = lines.length;
     const pasteEnd = prePasteLen + pasteLen;
-    const suffix = text.slice(pasteEnd);
+    const prefix = text.slice(0, prePasteLen);       // text typed BEFORE paste
+    const suffix = text.slice(pasteEnd);               // text typed AFTER paste
+    const pasteLines = text.slice(prePasteLen, pasteEnd).split('\n').length;
+
+    // Cursor position relative to suffix (text after paste)
     const relCursor = Math.max(0, cursorIdx - pasteEnd);
     const before = suffix.slice(0, relCursor);
     const at = suffix[relCursor] || ' ';
     const after = suffix.slice(relCursor + 1);
     return (
       <Text wrap="wrap">
-        <Text color="cyan" bold>[Pasted ~{Math.max(1, linesCount)} lines] </Text>
+        {prefix && <Text>{prefix}</Text>}
+        <Text color="cyan" bold>[Pasted ~{Math.max(1, pasteLines)} lines] </Text>
         {before}
         <Text backgroundColor="#555555" color="white">{at}</Text>
         {after}
@@ -102,8 +106,11 @@ export const App: React.FC = () => {
   const [state, setState] = useState<AppState>(stateManager.getState());
   const [prompt, setPrompt] = useState('');
   const [cursorPos, setCursorPos] = useState(0); // cursor position in prompt
-  const cursorPromptLen = useRef(0); // tracks prompt.length without stale closures
-  cursorPromptLen.current = prompt.length;
+  // Synchronous refs mirroring prompt & cursorPos — updated every render
+  const promptRef = useRef('');
+  const cursorRef = useRef(0);
+  promptRef.current = prompt;
+  cursorRef.current = cursorPos;
   const enterTimerRef = useRef<any>(null); // long-press Enter detection timer id
   const enterCancelledRef = useRef(false);
   // Paste batching: accumulates rapid chars and flushes after 20ms silence
@@ -218,26 +225,30 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Flush accumulated paste buffer — returns count of chars flushed
-  const flushPasteBuffer = (): number => {
+  // Flush accumulated paste buffer — synchronously updates refs + triggers React state
+  const flushPasteBuffer = (): void => {
     if (pasteTimerRef.current) {
       clearTimeout(pasteTimerRef.current);
       pasteTimerRef.current = null;
     }
     if (pasteBufRef.current) {
       const buf = pasteBufRef.current;
-      const addedLen = buf.length;
       pasteBufRef.current = '';
       if (buf.length > 3 && !pasteDetectedRef.current) {
         pasteDetectedRef.current = true;
-        prePasteLenRef.current = cursorPromptLen.current;
+        prePasteLenRef.current = cursorRef.current; // cursor position = where paste starts
         pasteLenRef.current = buf.length;
       }
-      setPrompt(prev => prev.slice(0, cursorPos) + buf + prev.slice(cursorPos));
-      setCursorPos(prev => prev + buf.length);
-      return addedLen;
+      // Insert at current cursor position
+      const cursor = cursorRef.current;
+      const newPrompt = promptRef.current.slice(0, cursor) + buf + promptRef.current.slice(cursor);
+      const newCursor = cursor + buf.length;
+      // Update refs synchronously for immediate reads in the same handler
+      promptRef.current = newPrompt;
+      cursorRef.current = newCursor;
+      setPrompt(newPrompt);
+      setCursorPos(newCursor);
     }
-    return 0;
   };
 
   // Main UI Keyboard listener
@@ -290,20 +301,25 @@ export const App: React.FC = () => {
     if (key.ctrl && input === 'a') {
       // Ctrl+A — cursor to start (or paste boundary if badge is active)
       flushPasteBuffer();
-      setCursorPos(pasteDetectedRef.current ? prePasteLenRef.current : 0);
+      const newCursor = pasteDetectedRef.current ? prePasteLenRef.current : 0;
+      cursorRef.current = newCursor;
+      setCursorPos(newCursor);
       return;
     }
 
     if (key.ctrl && input === 'e') {
       // Ctrl+E — cursor to end
       flushPasteBuffer();
-      setCursorPos(cursorPromptLen.current);
+      cursorRef.current = promptRef.current.length;
+      setCursorPos(promptRef.current.length);
       return;
     }
 
     if (key.ctrl && input === 'u') {
       flushPasteBuffer();
       pasteDetectedRef.current = false;
+      promptRef.current = '';
+      cursorRef.current = 0;
       setPrompt('');
       setCursorPos(0);
       return;
@@ -320,16 +336,20 @@ export const App: React.FC = () => {
       flushPasteBuffer();
       pasteDetectedRef.current = false;
       // Delete word before cursor (Ctrl+W)
-      setPrompt(prev => {
-        if (cursorPos <= 0) return prev;
-        const before = prev.slice(0, cursorPos);
-        const after = prev.slice(cursorPos);
-        const trimmed = before.trimEnd();
-        const lastSpace = trimmed.lastIndexOf(' ');
-        const wordStart = lastSpace === -1 ? 0 : lastSpace + 1;
-        setCursorPos(wordStart);
-        return prev.slice(0, wordStart) + after;
-      });
+      const cur = cursorRef.current;
+      const curPrompt = promptRef.current;
+      if (cur <= 0) return;
+      const before = curPrompt.slice(0, cur);
+      const after = curPrompt.slice(cur);
+      const trimmed = before.trimEnd();
+      const lastSpace = trimmed.lastIndexOf(' ');
+      const wordStart = lastSpace === -1 ? 0 : lastSpace + 1;
+      const newPrompt = curPrompt.slice(0, wordStart) + after;
+      promptRef.current = newPrompt;
+      cursorRef.current = wordStart;
+      setPrompt(newPrompt);
+      setCursorPos(wordStart);
+      if (showCommandPalette && newPrompt === '') setShowCommandPalette(false);
       return;
     }
 
@@ -337,7 +357,12 @@ export const App: React.FC = () => {
     if (key.ctrl && input === 'j') {
       flushPasteBuffer();
       pasteDetectedRef.current = false;
-      setPrompt(prev => prev + '\n');
+      const newPrompt = promptRef.current + '\n';
+      const newCursor = promptRef.current.length + 1;
+      promptRef.current = newPrompt;
+      cursorRef.current = newCursor;
+      setPrompt(newPrompt);
+      setCursorPos(newCursor);
       return;
     }
 
@@ -363,7 +388,11 @@ export const App: React.FC = () => {
         handlePromptSubmit();
       } else if (key.meta) {
         // Alt+Enter / Option+Enter inserts newline
-        setPrompt(prev => prev + '\n');
+        const newPrompt = promptRef.current + '\n';
+        promptRef.current = newPrompt;
+        cursorRef.current = newPrompt.length;
+        setPrompt(newPrompt);
+        setCursorPos(newPrompt.length);
         // Cancel any pending submit timer from earlier plain Enter
         if (enterTimerRef.current) {
           clearTimeout(enterTimerRef.current);
@@ -372,8 +401,8 @@ export const App: React.FC = () => {
         }
       } else {
         // Standard Enter — long-press detection:
-        //   Single quick tap → submit after 200ms debounce
-        //   Hold (auto-repeat kicks in within 200ms) → insert newline
+        //   Single quick tap → submit after 180ms debounce
+        //   Hold (auto-repeat kicks in) → insert newline
         const timerPending = enterTimerRef.current !== null;
 
         if (!timerPending) {
@@ -381,7 +410,7 @@ export const App: React.FC = () => {
           enterCancelledRef.current = false;
           enterTimerRef.current = setTimeout(() => {
             enterTimerRef.current = null;
-            if (!enterCancelledRef.current && prompt.trim()) {
+            if (!enterCancelledRef.current && promptRef.current.trim()) {
               handlePromptSubmit();
             }
           }, 180);
@@ -390,30 +419,40 @@ export const App: React.FC = () => {
           enterCancelledRef.current = true;
           clearTimeout(enterTimerRef.current);
           enterTimerRef.current = null;
-          setPrompt(prev => prev + '\n');
+          const newPrompt = promptRef.current + '\n';
+          promptRef.current = newPrompt;
+          cursorRef.current = newPrompt.length;
+          setPrompt(newPrompt);
+          setCursorPos(newPrompt.length);
         }
       }
       return;
     }
 
     if (key.backspace || key.delete) {
-      const added = flushPasteBuffer();
-      const actualCursor = cursorPos + added;
+      flushPasteBuffer();
+      const actualCursor = cursorRef.current;
       const pasteEnd = prePasteLenRef.current + pasteLenRef.current;
       // Cursor anywhere in/at the paste region → delete entire pasted block as one unit
       if (pasteDetectedRef.current && actualCursor >= prePasteLenRef.current && actualCursor <= pasteEnd) {
         pasteDetectedRef.current = false;
-        setPrompt(prev => prev.slice(0, prePasteLenRef.current) + prev.slice(pasteEnd));
-        setCursorPos(prePasteLenRef.current);
+        const newPrompt = promptRef.current.slice(0, prePasteLenRef.current) + promptRef.current.slice(pasteEnd);
+        const newCursor = prePasteLenRef.current;
+        promptRef.current = newPrompt;
+        cursorRef.current = newCursor;
+        setPrompt(newPrompt);
+        setCursorPos(newCursor);
       } else {
-        // Normal single-char delete using actualCursor
-        setPrompt(prev => {
-          if (actualCursor <= 0) return prev;
-          const next = prev.slice(0, actualCursor - 1) + prev.slice(actualCursor);
-          setCursorPos(actualCursor - 1);
-          if (showCommandPalette && next === '') setShowCommandPalette(false);
-          return next;
-        });
+        // Normal single-char delete
+        if (actualCursor <= 0) return;
+        const curPrompt = promptRef.current;
+        const newPrompt = curPrompt.slice(0, actualCursor - 1) + curPrompt.slice(actualCursor);
+        const newCursor = actualCursor - 1;
+        promptRef.current = newPrompt;
+        cursorRef.current = newCursor;
+        setPrompt(newPrompt);
+        setCursorPos(newCursor);
+        if (showCommandPalette && newPrompt === '') setShowCommandPalette(false);
       }
       return;
     }
@@ -421,63 +460,72 @@ export const App: React.FC = () => {
     // Arrow keys — normal cursor movement (dismiss paste badge if active)
     if (key.leftArrow) {
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
-      setCursorPos(prev => Math.max(0, prev - 1));
+      const newCursor = Math.max(0, cursorRef.current - 1);
+      cursorRef.current = newCursor;
+      setCursorPos(newCursor);
       return;
     }
     if (key.rightArrow) {
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
-      setCursorPos(prev => Math.min(cursorPromptLen.current, prev + 1));
+      const newCursor = Math.min(promptRef.current.length, cursorRef.current + 1);
+      cursorRef.current = newCursor;
+      setCursorPos(newCursor);
       return;
     }
     if (key.upArrow) {
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
-      const before = prompt.slice(0, cursorPos);
+      const curPrompt = promptRef.current;
+      const cur = cursorRef.current;
+      const before = curPrompt.slice(0, cur);
       const curLineStart = before.lastIndexOf('\n') + 1;
-      const posInLine = cursorPos - curLineStart;
-      // Effective wrapping width: account for paddingX={1} + "> " prefix
+      const posInLine = cur - curLineStart;
       const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 5 : 7));
       const vr = Math.floor(posInLine / wrapWidth);
       const vc = posInLine % wrapWidth;
+      let newCursor = cur;
       if (vr > 0) {
-        // Same logical line, previous visual row
-        setCursorPos(curLineStart + (vr - 1) * wrapWidth + vc);
+        newCursor = curLineStart + (vr - 1) * wrapWidth + vc;
       } else if (curLineStart > 0) {
-        // Previous logical line, last visual row
         const prevLineStart = before.slice(0, curLineStart - 1).lastIndexOf('\n') + 1;
         const prevLineLen = curLineStart - prevLineStart - 1;
         const prevVisualRows = Math.max(1, Math.ceil(prevLineLen / wrapWidth));
         const lastRowStart = (prevVisualRows - 1) * wrapWidth;
         const lastRowLen = Math.max(0, prevLineLen - lastRowStart);
         const col = Math.min(vc, Math.max(0, lastRowLen - 1));
-        setCursorPos(prevLineStart + lastRowStart + col);
+        newCursor = prevLineStart + lastRowStart + col;
       }
+      cursorRef.current = newCursor;
+      setCursorPos(newCursor);
       return;
     }
     if (key.downArrow) {
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
-      const before = prompt.slice(0, cursorPos);
+      const curPrompt = promptRef.current;
+      const cur = cursorRef.current;
+      const before = curPrompt.slice(0, cur);
       const curLineStart = before.lastIndexOf('\n') + 1;
-      const afterNl = prompt.indexOf('\n', Math.max(cursorPos, curLineStart));
-      const lineEnd = afterNl === -1 ? prompt.length : afterNl;
+      const afterNl = curPrompt.indexOf('\n', Math.max(cur, curLineStart));
+      const lineEnd = afterNl === -1 ? curPrompt.length : afterNl;
       const lineLen = lineEnd - curLineStart;
-      const posInLine = cursorPos - curLineStart;
+      const posInLine = cur - curLineStart;
       const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 5 : 7));
       const vr = Math.floor(posInLine / wrapWidth);
       const vc = posInLine % wrapWidth;
       const visualRows = Math.max(1, Math.ceil(lineLen / wrapWidth));
+      let newCursor = cur;
       if (vr < visualRows - 1) {
-        // Same logical line, next visual row
         const nextRowStart = (vr + 1) * wrapWidth;
         const nextRowLen = Math.max(0, lineLen - nextRowStart);
         const clampedCol = Math.min(vc, Math.max(0, nextRowLen - 1));
-        setCursorPos(curLineStart + nextRowStart + clampedCol);
+        newCursor = curLineStart + nextRowStart + clampedCol;
       } else if (afterNl !== -1) {
-        // Next logical line, first visual row
         const nextLineStart = afterNl + 1;
-        const afterNextNl = prompt.indexOf('\n', nextLineStart);
-        const nextLineLen = afterNextNl === -1 ? prompt.length - nextLineStart : afterNextNl - nextLineStart;
-        setCursorPos(nextLineStart + Math.min(vc, Math.max(0, nextLineLen - 1)));
+        const afterNextNl = curPrompt.indexOf('\n', nextLineStart);
+        const nextLineLen = afterNextNl === -1 ? curPrompt.length - nextLineStart : afterNextNl - nextLineStart;
+        newCursor = nextLineStart + Math.min(vc, Math.max(0, nextLineLen - 1));
       }
+      cursorRef.current = newCursor;
+      setCursorPos(newCursor);
       return;
     }
 
@@ -488,14 +536,15 @@ export const App: React.FC = () => {
         enterTimerRef.current = null;
         enterCancelledRef.current = true;
       }
-      // Editing before/inside paste region → dismiss badge, show full text
+      // Typing before/inside paste region → dismiss badge, merge with text
+      // Typing after paste region (cursor >= pasteEnd) → badge stays, text appended after paste
       if (pasteDetectedRef.current) {
         const pasteEnd = prePasteLenRef.current + pasteLenRef.current;
-        if (cursorPos < pasteEnd) {
+        if (cursorRef.current < pasteEnd) {
           pasteDetectedRef.current = false;
         }
       }
-      if (prompt === '' && input === '/') {
+      if (promptRef.current === '' && input === '/') {
         if (state.currentScreen === 'home') process.stdout.write('\x1b[2J\x1b[H');
         setShowCommandPalette(true);
       }
@@ -513,7 +562,7 @@ export const App: React.FC = () => {
 
   // Slash commands routing handler
   const handlePromptSubmit = () => {
-    const trimmed = prompt.trim();
+    const trimmed = promptRef.current.trim();
     if (!trimmed) return;
 
     if (trimmed.startsWith('/')) {

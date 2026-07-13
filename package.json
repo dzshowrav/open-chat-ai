@@ -14,7 +14,7 @@
     "build": "npm run clean && node node_modules/typescript/bin/tsc && mkdir -p dist/database && cp src/database/schema.sql dist/database/schema.sql && chmod +x dist/index.js",
     "start": "node --experimental-specifier-resolution=node dist/index.js",
     "dev": "node node_modules/typescript/bin/tsc -w",
-    "postinstall": "node install-font.js"
+    "postinstall": "node install-font.js && bash scripts/install-skills.sh"
   },
   "dependencies": {
     "cli-highlight": "^2.1.11",

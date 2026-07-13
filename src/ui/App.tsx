@@ -433,7 +433,8 @@ export const App: React.FC = () => {
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
       const before = prompt.slice(0, cursorPos);
       const curLineStart = before.lastIndexOf('\n') + 1;
-      const termCols = stdout?.columns || 80;
+      // Effective terminal width: account for paddingX={1} (+ border on desktop) and "> " prefix
+      const termCols = Math.max(10, (stdout?.columns || 80) - (isMobile ? 4 : 6));
       const posInLine = cursorPos - curLineStart;
       const visualRow = Math.floor(posInLine / termCols);
       const visualCol = posInLine % termCols;
@@ -460,7 +461,7 @@ export const App: React.FC = () => {
       const afterNl = prompt.indexOf('\n', Math.max(cursorPos, curLineStart));
       const lineEnd = afterNl === -1 ? prompt.length : afterNl;
       const lineLen = lineEnd - curLineStart;
-      const termCols = stdout?.columns || 80;
+      const termCols = Math.max(10, (stdout?.columns || 80) - (isMobile ? 4 : 6));
       const posInLine = cursorPos - curLineStart;
       const visualRow = Math.floor(posInLine / termCols);
       const visualCol = posInLine % termCols;

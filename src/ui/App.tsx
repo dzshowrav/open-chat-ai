@@ -105,12 +105,18 @@ const renderPromptPreview = (
   const emitText = (start: number, end: number) => {
     if (start >= end) return;
     const chunk = text.slice(start, end);
-    if (!cursorDone && cursorIdx >= start && cursorIdx < end) {
-      const local = cursorIdx - start;
-      const c = chunk[local] || ' ';
-      elements.push(<Text key={`t${start}`}>{chunk.slice(0, local)}</Text>);
-      elements.push(<Text key={`c${start}`} backgroundColor="#555555" color="white">{c}</Text>);
-      elements.push(<Text key={`a${start}`}>{chunk.slice(local + 1)}</Text>);
+    if (!cursorDone && cursorIdx >= start && cursorIdx <= end) {
+      if (cursorIdx >= end) {
+        // Cursor at/after end of this chunk → cursor at very end of text
+        elements.push(<Text key={`t${start}`}>{chunk}</Text>);
+        elements.push(<Text key={`c${start}`} backgroundColor="#555555" color="white"> </Text>);
+      } else {
+        const local = cursorIdx - start;
+        const c = chunk[local] || ' ';
+        elements.push(<Text key={`t${start}`}>{chunk.slice(0, local)}</Text>);
+        elements.push(<Text key={`c${start}`} backgroundColor="#555555" color="white">{c}</Text>);
+        elements.push(<Text key={`a${start}`}>{chunk.slice(local + 1)}</Text>);
+      }
       cursorDone = true;
     } else {
       elements.push(<Text key={`t${start}`}>{chunk}</Text>);
@@ -294,9 +300,12 @@ export const App: React.FC = () => {
     if (pasteBufRef.current) {
       const buf = pasteBufRef.current;
       pasteBufRef.current = '';
+      const cursor = cursorRef.current;
+      // Record how many parts EXISTED before this flush (newly created ones skip range adjustment)
+      const existingLen = promptPartsRef.current.length;
+
       if (buf.length >= 3) {
         const parts = promptPartsRef.current;
-        const cursor = cursorRef.current;
         if (parts.length > 0) {
           const lastPart = parts[parts.length - 1];
           if (lastPart.source && cursor === lastPart.source.text.end) {
@@ -321,10 +330,30 @@ export const App: React.FC = () => {
           });
         }
       }
-      // Insert at current cursor position
-      const cursor = cursorRef.current;
+
+      // Insert buf at current cursor position
       const newPrompt = promptRef.current.slice(0, cursor) + buf + promptRef.current.slice(cursor);
       const newCursor = cursor + buf.length;
+
+      // ── Adjust existing paste part ranges for text insertion ──
+      // Any existing part that STARTED at or after the cursor needs its range shifted
+      // Parts created in THIS flush call (indices >= existingLen) already have correct ranges
+      if (buf.length > 0) {
+        for (let i = 0; i < existingLen; i++) {
+          const part = promptPartsRef.current[i];
+          if (part.source) {
+            const s = part.source.text;
+            if (s.start > cursor) {
+              // Text was inserted BEFORE this paste → shift range forward
+              s.start += buf.length;
+              s.end += buf.length;
+            }
+            // If s.start === cursor: part created at cursor or is the accumulated one → already correct
+            // If s.start < cursor: part is before insertion point → unaffected
+          }
+        }
+      }
+
       // Update refs synchronously for immediate reads in the same handler
       promptRef.current = newPrompt;
       cursorRef.current = newCursor;
@@ -654,6 +683,9 @@ export const App: React.FC = () => {
       executeSlashCommand(trimmed);
       setPrompt('');
       setCursorPos(0);
+      promptRef.current = '';
+      cursorRef.current = 0;
+      promptPartsRef.current = [];
       return;
     }
 
@@ -662,6 +694,9 @@ export const App: React.FC = () => {
       stateManager.setState({ errorMsg: 'Error: No active AI model or provider configured.' });
       setPrompt('');
       setCursorPos(0);
+      promptRef.current = '';
+      cursorRef.current = 0;
+      promptPartsRef.current = [];
       return;
     }
 
@@ -693,6 +728,9 @@ export const App: React.FC = () => {
     setMessages(sessionRepo.getMessages(sessionId));
     setPrompt('');
     setCursorPos(0);
+    promptRef.current = '';
+    cursorRef.current = 0;
+    promptPartsRef.current = [];
 
     // Trigger AI Chat call (Simulated completion trigger for validation)
     triggerAiCompletion(sessionId, trimmed);

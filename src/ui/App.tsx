@@ -435,7 +435,7 @@ export const App: React.FC = () => {
       const curLineStart = before.lastIndexOf('\n') + 1;
       const posInLine = cursorPos - curLineStart;
       // Effective wrapping width: account for paddingX={1} + "> " prefix
-      const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 6 : 8));
+      const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 7 : 9));
       const vr = Math.floor(posInLine / wrapWidth);
       const vc = posInLine % wrapWidth;
       if (vr > 0) {
@@ -461,7 +461,7 @@ export const App: React.FC = () => {
       const lineEnd = afterNl === -1 ? prompt.length : afterNl;
       const lineLen = lineEnd - curLineStart;
       const posInLine = cursorPos - curLineStart;
-      const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 6 : 8));
+      const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 7 : 9));
       const vr = Math.floor(posInLine / wrapWidth);
       const vc = posInLine % wrapWidth;
       const visualRows = Math.max(1, Math.ceil(lineLen / wrapWidth));

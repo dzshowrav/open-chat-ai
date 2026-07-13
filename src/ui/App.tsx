@@ -142,9 +142,19 @@ export const App: React.FC = () => {
   // Paste batching: accumulates rapid chars and flushes after 20ms silence
   const pasteBufRef = useRef('');
   const pasteTimerRef = useRef<any>(null);
-  const pasteDetectedRef = useRef(false); // true right after a paste, cleared on next typing
-  const prePasteLenRef = useRef(0); // prompt length before paste content starts
-  const pasteLenRef = useRef(0); // length of just the pasted content
+  const pasteDetectedRef = useRef(false); // true if any paste ranges exist
+  // Multi-paste tracking: each paste burst gets its own {start, end} range
+  // Allows independent deletion — backspace removes the paste range at cursor
+  interface PasteRange { start: number; end: number; }
+  const pasteRangesRef = useRef<PasteRange[]>([]);
+  // Compute aggregate pasted region for badge display (covers ALL ranges)
+  const getPasteAggregate = (): { prePasteLen: number; pasteLen: number } => {
+    const r = pasteRangesRef.current;
+    if (r.length === 0) return { prePasteLen: 0, pasteLen: 0 };
+    const prePasteLen = Math.min(...r.map(x => x.start));
+    const maxEnd = Math.max(...r.map(x => x.end));
+    return { prePasteLen, pasteLen: maxEnd - prePasteLen };
+  };
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -261,15 +271,21 @@ export const App: React.FC = () => {
       const buf = pasteBufRef.current;
       pasteBufRef.current = '';
       if (buf.length >= 3) {
-        if (pasteDetectedRef.current && cursorRef.current === prePasteLenRef.current + pasteLenRef.current) {
-          // Same paste continuing (cursor still at paste end) → accumulate
-          pasteLenRef.current += buf.length;
+        const ranges = pasteRangesRef.current;
+        if (ranges.length > 0) {
+          const lastRange = ranges[ranges.length - 1];
+          if (cursorRef.current === lastRange.end) {
+            // Same paste burst continuing (debounce boundary) → extend last range
+            lastRange.end += buf.length;
+          } else {
+            // Separate paste at different cursor position → push new range
+            ranges.push({ start: cursorRef.current, end: cursorRef.current + buf.length });
+          }
         } else {
-          // New paste (cursor moved or first detection) → reset tracking
-          pasteDetectedRef.current = true;
-          prePasteLenRef.current = cursorRef.current;
-          pasteLenRef.current = buf.length;
+          // First paste detection
+          ranges.push({ start: cursorRef.current, end: cursorRef.current + buf.length });
         }
+        pasteDetectedRef.current = true;
       }
       // Insert at current cursor position
       const cursor = cursorRef.current;
@@ -333,7 +349,10 @@ export const App: React.FC = () => {
     if (key.ctrl && input === 'a') {
       // Ctrl+A — cursor to start (or paste boundary if badge is active)
       flushPasteBuffer();
-      const newCursor = pasteDetectedRef.current ? prePasteLenRef.current : 0;
+      const firstPasteStart = pasteRangesRef.current.length > 0
+        ? Math.min(...pasteRangesRef.current.map(r => r.start))
+        : 0;
+      const newCursor = pasteDetectedRef.current ? firstPasteStart : 0;
       cursorRef.current = newCursor;
       setCursorPos(newCursor);
       return;
@@ -350,6 +369,7 @@ export const App: React.FC = () => {
     if (key.ctrl && input === 'u') {
       flushPasteBuffer();
       pasteDetectedRef.current = false;
+      pasteRangesRef.current = [];
       promptRef.current = '';
       cursorRef.current = 0;
       setPrompt('');
@@ -367,6 +387,7 @@ export const App: React.FC = () => {
     if (key.ctrl && input === 'w') {
       flushPasteBuffer();
       pasteDetectedRef.current = false;
+      pasteRangesRef.current = [];
       // Delete word before cursor (Ctrl+W)
       const cur = cursorRef.current;
       const curPrompt = promptRef.current;
@@ -389,6 +410,7 @@ export const App: React.FC = () => {
     if (key.ctrl && input === 'j') {
       flushPasteBuffer();
       pasteDetectedRef.current = false;
+      pasteRangesRef.current = [];
       const newPrompt = promptRef.current + '\n';
       const newCursor = promptRef.current.length + 1;
       promptRef.current = newPrompt;
@@ -411,6 +433,7 @@ export const App: React.FC = () => {
     if (key.return) {
       flushPasteBuffer();
       pasteDetectedRef.current = false;
+      pasteRangesRef.current = [];
       if (key.shift || key.ctrl) {
         // Shift+Enter / Ctrl+Enter submits
         if (enterTimerRef.current) {
@@ -464,28 +487,33 @@ export const App: React.FC = () => {
     if (key.backspace || key.delete) {
       flushPasteBuffer();
       const actualCursor = cursorRef.current;
-      const pasteEnd = prePasteLenRef.current + pasteLenRef.current;
-      // Cursor anywhere in/at the paste region → delete entire pasted block as one unit
-      if (pasteDetectedRef.current && actualCursor >= prePasteLenRef.current && actualCursor <= pasteEnd) {
-        pasteDetectedRef.current = false;
-        const newPrompt = promptRef.current.slice(0, prePasteLenRef.current) + promptRef.current.slice(pasteEnd);
-        const newCursor = prePasteLenRef.current;
-        promptRef.current = newPrompt;
-        cursorRef.current = newCursor;
-        setPrompt(newPrompt);
-        setCursorPos(newCursor);
-      } else {
-        // Normal single-char delete
-        if (actualCursor <= 0) return;
-        const curPrompt = promptRef.current;
-        const newPrompt = curPrompt.slice(0, actualCursor - 1) + curPrompt.slice(actualCursor);
-        const newCursor = actualCursor - 1;
-        promptRef.current = newPrompt;
-        cursorRef.current = newCursor;
-        setPrompt(newPrompt);
-        setCursorPos(newCursor);
-        if (showCommandPalette && newPrompt === '') setShowCommandPalette(false);
+      const ranges = pasteRangesRef.current;
+      // Find which paste range the cursor is at/in → delete that range only
+      if (ranges.length > 0) {
+        const idx = ranges.findIndex(r => actualCursor >= r.start && actualCursor <= r.end);
+        if (idx !== -1) {
+          const range = ranges[idx];
+          ranges.splice(idx, 1);
+          if (ranges.length === 0) pasteDetectedRef.current = false;
+          const newPrompt = promptRef.current.slice(0, range.start) + promptRef.current.slice(range.end);
+          const newCursor = range.start;
+          promptRef.current = newPrompt;
+          cursorRef.current = newCursor;
+          setPrompt(newPrompt);
+          setCursorPos(newCursor);
+          return;
+        }
       }
+      // Normal single-char delete
+      if (actualCursor <= 0) return;
+      const curPrompt = promptRef.current;
+      const newPrompt = curPrompt.slice(0, actualCursor - 1) + curPrompt.slice(actualCursor);
+      const newCursor = actualCursor - 1;
+      promptRef.current = newPrompt;
+      cursorRef.current = newCursor;
+      setPrompt(newPrompt);
+      setCursorPos(newCursor);
+      if (showCommandPalette && newPrompt === '') setShowCommandPalette(false);
       return;
     }
 
@@ -564,11 +592,12 @@ export const App: React.FC = () => {
         enterTimerRef.current = null;
         enterCancelledRef.current = true;
       }
-      // Typing before/inside paste region → dismiss badge, merge with text
-      // Typing after paste region (cursor >= pasteEnd) → badge stays, text appended after paste
-      if (pasteDetectedRef.current) {
-        const pasteEnd = prePasteLenRef.current + pasteLenRef.current;
-        if (cursorRef.current < pasteEnd) {
+      // Typing before/inside any paste range → dismiss ALL paste badges
+      // Typing after ALL ranges (cursor >= maxEnd) → badge stays, text appended to suffix
+      if (pasteRangesRef.current.length > 0) {
+        const maxEnd = Math.max(...pasteRangesRef.current.map(r => r.end));
+        if (cursorRef.current < maxEnd) {
+          pasteRangesRef.current = [];
           pasteDetectedRef.current = false;
         }
       }
@@ -1391,13 +1420,13 @@ export const App: React.FC = () => {
             {!isUltraCompact && <Text color="gray">{"─".repeat(stdout?.columns || 80)}</Text>}
             <Box flexDirection="row" paddingX={1} marginY={0}>
               <Text color={theme.accentColor} bold>&gt; </Text>
-              {renderPromptPreview(prompt, cursorPos, pasteDetectedRef.current, prePasteLenRef.current, pasteLenRef.current)}
+              {(() => { const a = getPasteAggregate(); return renderPromptPreview(prompt, cursorPos, pasteDetectedRef.current, a.prePasteLen, a.pasteLen); })()}
             </Box>
           </Box>
         ) : (
           <Box flexDirection="row" borderStyle="single" borderColor={theme.accentColor} paddingX={1} marginY={0.5}>
             <Text color={theme.accentColor} bold>&gt; </Text>
-            {renderPromptPreview(prompt, cursorPos, pasteDetectedRef.current, prePasteLenRef.current, pasteLenRef.current)}
+            {(() => { const a = getPasteAggregate(); return renderPromptPreview(prompt, cursorPos, pasteDetectedRef.current, a.prePasteLen, a.pasteLen); })()}
           </Box>
         )}
         <StatusBar state={state} />

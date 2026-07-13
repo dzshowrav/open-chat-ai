@@ -36,7 +36,13 @@ OpenChat AI is an advanced, terminal-based AI coding assistant engineered specif
 
 ## Installation
 
-Install globally using `npm` directly from the local repository directory or via GitHub:
+### Quick Install (Single Command)
+
+```bash
+git clone https://github.com/dzshowrav/open-chat-ai.git && cd open-chat-ai && npm install && npm run build && npm link
+```
+
+### Step-by-Step
 
 ```bash
 # Clone the repository

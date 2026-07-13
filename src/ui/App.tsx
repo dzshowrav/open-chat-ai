@@ -333,6 +333,14 @@ export const App: React.FC = () => {
       return;
     }
 
+    // Ctrl+J — insert newline (useful for mobile keyboards)
+    if (key.ctrl && input === 'j') {
+      flushPasteBuffer();
+      pasteDetectedRef.current = false;
+      setPrompt(prev => prev + '\n');
+      return;
+    }
+
     // Let CommandPalette handle these navigation/action keys completely
     if (showCommandPalette && (key.upArrow || key.downArrow || key.return || key.escape)) {
       return; 

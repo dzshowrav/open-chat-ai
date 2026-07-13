@@ -55,20 +55,46 @@ const renderPromptPreview = (text: string, cursorIdx: number, pasteDetected: boo
     const suffix = text.slice(pasteEnd);               // text typed AFTER paste
     const pasteLines = text.slice(prePasteLen, pasteEnd).split('\n').length;
 
-    // Cursor position relative to suffix (text after paste)
-    const relCursor = Math.max(0, cursorIdx - pasteEnd);
-    const before = suffix.slice(0, relCursor);
-    const at = suffix[relCursor] || ' ';
-    const after = suffix.slice(relCursor + 1);
-    return (
-      <Text wrap="wrap">
-        {prefix && <Text>{prefix}</Text>}
-        <Text color="cyan" bold>[Pasted ~{Math.max(1, pasteLines)} lines] </Text>
-        {before}
-        <Text backgroundColor="#555555" color="white">{at}</Text>
-        {after}
-      </Text>
-    );
+    if (cursorIdx < prePasteLen) {
+      // Cursor in prefix
+      const before = prefix.slice(0, cursorIdx);
+      const at = prefix[cursorIdx] || ' ';
+      const after = prefix.slice(cursorIdx + 1);
+      return (
+        <Text wrap="wrap">
+          {before}
+          <Text backgroundColor="#555555" color="white">{at}</Text>
+          {after}
+          <Text color="cyan" bold>[Pasted ~{Math.max(1, pasteLines)} lines] </Text>
+          {suffix}
+        </Text>
+      );
+    } else if (cursorIdx < pasteEnd) {
+      // Cursor INSIDE paste region — show cursor to the LEFT of badge
+      return (
+        <Text wrap="wrap">
+          {prefix}
+          <Text backgroundColor="#555555" color="white"> </Text>
+          <Text color="cyan" bold>[Pasted ~{Math.max(1, pasteLines)} lines] </Text>
+          {suffix}
+        </Text>
+      );
+    } else {
+      // Cursor in suffix
+      const relCursor = cursorIdx - pasteEnd;
+      const before = suffix.slice(0, relCursor);
+      const at = suffix[relCursor] || ' ';
+      const after = suffix.slice(relCursor + 1);
+      return (
+        <Text wrap="wrap">
+          {prefix}
+          <Text color="cyan" bold>[Pasted ~{Math.max(1, pasteLines)} lines] </Text>
+          {before}
+          <Text backgroundColor="#555555" color="white">{at}</Text>
+          {after}
+        </Text>
+      );
+    }
   }
 
   // Normal display: full text with cursor

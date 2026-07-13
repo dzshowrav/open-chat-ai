@@ -457,23 +457,20 @@ export const App: React.FC = () => {
       return;
     }
 
-    // Arrow keys — normal cursor movement (dismiss paste badge if active)
+    // Arrow keys — normal cursor movement (paste badge stays visible)
     if (key.leftArrow) {
-      if (pasteDetectedRef.current) pasteDetectedRef.current = false;
       const newCursor = Math.max(0, cursorRef.current - 1);
       cursorRef.current = newCursor;
       setCursorPos(newCursor);
       return;
     }
     if (key.rightArrow) {
-      if (pasteDetectedRef.current) pasteDetectedRef.current = false;
       const newCursor = Math.min(promptRef.current.length, cursorRef.current + 1);
       cursorRef.current = newCursor;
       setCursorPos(newCursor);
       return;
     }
     if (key.upArrow) {
-      if (pasteDetectedRef.current) pasteDetectedRef.current = false;
       const curPrompt = promptRef.current;
       const cur = cursorRef.current;
       const before = curPrompt.slice(0, cur);
@@ -499,7 +496,6 @@ export const App: React.FC = () => {
       return;
     }
     if (key.downArrow) {
-      if (pasteDetectedRef.current) pasteDetectedRef.current = false;
       const curPrompt = promptRef.current;
       const cur = cursorRef.current;
       const before = curPrompt.slice(0, cur);

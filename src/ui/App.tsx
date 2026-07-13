@@ -434,30 +434,22 @@ export const App: React.FC = () => {
       const before = prompt.slice(0, cursorPos);
       const curLineStart = before.lastIndexOf('\n') + 1;
       const posInLine = cursorPos - curLineStart;
-      // Wrap width = terminal width minus paddingX={1} on both sides
-      const wrapWidth = Math.max(10, (stdout?.columns || 80) - 2);
-      // "> " prefix only on the first logical line
-      const prefixLen = (curLineStart === 0) ? 2 : 0;
-      // Position in the rendered text (prefix + prompt text)
-      const renderedPos = posInLine + prefixLen;
-      const vr = Math.floor(renderedPos / wrapWidth);  // visual row in rendered text
-      const vc = renderedPos % wrapWidth;               // visual column
+      // Effective wrapping width: account for paddingX={1} + "> " prefix
+      const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 6 : 8));
+      const vr = Math.floor(posInLine / wrapWidth);
+      const vc = posInLine % wrapWidth;
       if (vr > 0) {
         // Same logical line, previous visual row
-        const targetRendered = (vr - 1) * wrapWidth + vc;
-        setCursorPos(curLineStart + Math.max(0, targetRendered - prefixLen));
+        setCursorPos(curLineStart + (vr - 1) * wrapWidth + vc);
       } else if (curLineStart > 0) {
         // Previous logical line, last visual row
         const prevLineStart = before.slice(0, curLineStart - 1).lastIndexOf('\n') + 1;
         const prevLineLen = curLineStart - prevLineStart - 1;
-        const prevPrefix = (prevLineStart === 0) ? 2 : 0;
-        const prevRenderedLen = prevLineLen + prevPrefix;
-        const prevVisualRows = Math.max(1, Math.ceil(prevRenderedLen / wrapWidth));
+        const prevVisualRows = Math.max(1, Math.ceil(prevLineLen / wrapWidth));
         const lastRowStart = (prevVisualRows - 1) * wrapWidth;
-        const lastRowLen = Math.max(0, prevRenderedLen - lastRowStart);
+        const lastRowLen = Math.max(0, prevLineLen - lastRowStart);
         const col = Math.min(vc, Math.max(0, lastRowLen - 1));
-        const targetRendered = lastRowStart + col;
-        setCursorPos(prevLineStart + Math.max(0, Math.min(targetRendered - prevPrefix, prevLineLen)));
+        setCursorPos(prevLineStart + lastRowStart + col);
       }
       return;
     }
@@ -469,31 +461,22 @@ export const App: React.FC = () => {
       const lineEnd = afterNl === -1 ? prompt.length : afterNl;
       const lineLen = lineEnd - curLineStart;
       const posInLine = cursorPos - curLineStart;
-      const wrapWidth = Math.max(10, (stdout?.columns || 80) - 2);
-      const prefixLen = (curLineStart === 0) ? 2 : 0;
-      const renderedPos = posInLine + prefixLen;
-      const vr = Math.floor(renderedPos / wrapWidth);
-      const vc = renderedPos % wrapWidth;
-      const totalRenderedLen = lineLen + prefixLen;
-      const visualRows = Math.max(1, Math.ceil(totalRenderedLen / wrapWidth));
+      const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 6 : 8));
+      const vr = Math.floor(posInLine / wrapWidth);
+      const vc = posInLine % wrapWidth;
+      const visualRows = Math.max(1, Math.ceil(lineLen / wrapWidth));
       if (vr < visualRows - 1) {
         // Same logical line, next visual row
-        const targetRendered = (vr + 1) * wrapWidth + vc;
-        // Clamp to not exceed the last character of the target row
         const nextRowStart = (vr + 1) * wrapWidth;
-        const nextRowLen = Math.max(0, totalRenderedLen - nextRowStart);
+        const nextRowLen = Math.max(0, lineLen - nextRowStart);
         const clampedCol = Math.min(vc, Math.max(0, nextRowLen - 1));
-        setCursorPos(curLineStart + Math.max(0, nextRowStart + clampedCol - prefixLen));
+        setCursorPos(curLineStart + nextRowStart + clampedCol);
       } else if (afterNl !== -1) {
         // Next logical line, first visual row
         const nextLineStart = afterNl + 1;
         const afterNextNl = prompt.indexOf('\n', nextLineStart);
         const nextLineLen = afterNextNl === -1 ? prompt.length - nextLineStart : afterNextNl - nextLineStart;
-        const nextPrefix = (nextLineStart === 0) ? 2 : 0; // always 0 since nextLineStart > 0
-        // First visual row: vc column in the rendered text
-        // If vc < nextPrefix, clamp to column 0 of prompt text
-        const targetRendered = vc;
-        setCursorPos(nextLineStart + Math.max(0, Math.min(targetRendered - nextPrefix, nextLineLen)));
+        setCursorPos(nextLineStart + Math.min(vc, Math.max(0, nextLineLen - 1)));
       }
       return;
     }

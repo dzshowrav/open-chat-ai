@@ -424,11 +424,10 @@ export const App: React.FC = () => {
       // Desktop: root paddingX(1→2) + border(2) + prompt padding(2) + "> "(2) = 8
       // Mobile:  none + none + padding(2) + "> "(2) = 4
       const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 4 : 8));
-      // Fix: wrap-ansi with hard:true fits EXACTLY wrapWidth chars per row.
-      // PosInLine=wrapWidth (after last char) is still on row 0 (col wrapWidth), NOT row 1 col 0.
-      // Formula: vr = floor(max(0, pos-1)/W), vc = ((max(0,pos-1) % W) + 1)
-      const vr = posInLine === 0 ? 0 : Math.floor((posInLine - 1) / wrapWidth);
-      const vc = posInLine === 0 ? 0 : ((posInLine - 1) % wrapWidth) + 1;
+      // Ink's <Text wrap="wrap"> wraps continuous text at wrapWidth columns.
+      // Visual row = floor(pos / W), visual col = pos % W.
+      const vr = Math.floor(posInLine / wrapWidth);
+      const vc = posInLine % wrapWidth;
       let newCursor = cur;
       if (vr > 0) {
         // Same logical line, previous visual row
@@ -459,8 +458,8 @@ export const App: React.FC = () => {
       // Desktop: root paddingX(1→2) + border(2) + prompt padding(2) + "> "(2) = 8
       // Mobile:  none + none + padding(2) + "> "(2) = 4
       const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 4 : 8));
-      const vr = posInLine === 0 ? 0 : Math.floor((posInLine - 1) / wrapWidth);
-      const vc = posInLine === 0 ? 0 : ((posInLine - 1) % wrapWidth) + 1;
+      const vr = Math.floor(posInLine / wrapWidth);
+      const vc = posInLine % wrapWidth;
       const visualRows = Math.max(1, Math.ceil(lineLen / wrapWidth));
       let newCursor = cur;
       if (vr < visualRows - 1) {

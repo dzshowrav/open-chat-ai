@@ -38,6 +38,7 @@ import { ApiEngine } from '../api/apiEngine.js';
 import { ContextBuilder } from '../core/contextBuilder.js';
 import { ToolManager } from '../tools/toolManager.js';
 import { executeToolCalls, buildApiMessages, getToolNiceName, getToolTargetDisplay } from '../core/contentBlocks.js';
+import { getVisualRows, getVisualPosition } from '../core/wrapWidth.js';
 
 const renderPromptPreview = (text: string, cursorIdx: number) => {
   if (!text) {
@@ -420,27 +421,27 @@ export const App: React.FC = () => {
       const cur = cursorRef.current;
       const before = curPrompt.slice(0, cur);
       const curLineStart = before.lastIndexOf('\n') + 1;
+      const lineEnd = curPrompt.indexOf('\n', curLineStart);
+      const curLine = curPrompt.slice(curLineStart, lineEnd === -1 ? undefined : lineEnd);
       const posInLine = cur - curLineStart;
       // Desktop: root paddingX(1→2) + border(2) + prompt padding(2) + "> "(2) = 8
       // Mobile:  none + none + padding(2) + "> "(2) = 4
       const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 4 : 8));
-      // Ink's <Text wrap="wrap"> wraps continuous text at wrapWidth columns.
-      // Visual row = floor(pos / W), visual col = pos % W.
-      const vr = Math.floor(posInLine / wrapWidth);
-      const vc = posInLine % wrapWidth;
+      const rows = getVisualRows(curLine, wrapWidth);
+      const { row, col } = getVisualPosition(posInLine, rows);
       let newCursor = cur;
-      if (vr > 0) {
+      if (row > 0) {
         // Same logical line, previous visual row
-        newCursor = curLineStart + (vr - 1) * wrapWidth + vc;
+        const prevRow = rows[row - 1];
+        newCursor = curLineStart + prevRow.start + Math.min(col, prevRow.length);
       } else if (curLineStart > 0) {
         // Previous logical line, last visual row
         const prevLineStart = before.slice(0, curLineStart - 1).lastIndexOf('\n') + 1;
-        const prevLineLen = curLineStart - prevLineStart - 1;
-        const prevVrows = Math.max(1, Math.ceil(prevLineLen / wrapWidth));
-        const lastRowStart = (prevVrows - 1) * wrapWidth;
-        const lastRowLen = Math.max(0, prevLineLen - lastRowStart);
-        const col = Math.min(vc, lastRowLen); // allow vc==lastRowLen (end-of-row)
-        newCursor = prevLineStart + lastRowStart + col;
+        const prevLineEnd = curLineStart - 1;
+        const prevLine = curPrompt.slice(prevLineStart, prevLineEnd);
+        const prevRows = getVisualRows(prevLine, wrapWidth);
+        const lastRow = prevRows[prevRows.length - 1];
+        newCursor = prevLineStart + lastRow.start + Math.min(col, lastRow.length);
       }
       cursorRef.current = newCursor;
       setCursorPos(newCursor);
@@ -453,27 +454,27 @@ export const App: React.FC = () => {
       const curLineStart = before.lastIndexOf('\n') + 1;
       const afterNl = curPrompt.indexOf('\n', Math.max(cur, curLineStart));
       const lineEnd = afterNl === -1 ? curPrompt.length : afterNl;
-      const lineLen = lineEnd - curLineStart;
+      const curLine = curPrompt.slice(curLineStart, lineEnd);
       const posInLine = cur - curLineStart;
       // Desktop: root paddingX(1→2) + border(2) + prompt padding(2) + "> "(2) = 8
       // Mobile:  none + none + padding(2) + "> "(2) = 4
       const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 4 : 8));
-      const vr = Math.floor(posInLine / wrapWidth);
-      const vc = posInLine % wrapWidth;
-      const visualRows = Math.max(1, Math.ceil(lineLen / wrapWidth));
+      const rows = getVisualRows(curLine, wrapWidth);
+      const { row, col } = getVisualPosition(posInLine, rows);
       let newCursor = cur;
-      if (vr < visualRows - 1) {
+      if (row < rows.length - 1) {
         // Same logical line, next visual row
-        const nextRowStart = (vr + 1) * wrapWidth;
-        const nextRowLen = Math.max(0, lineLen - nextRowStart);
-        const clampedCol = Math.min(vc, nextRowLen); // allow vc==nextRowLen
-        newCursor = curLineStart + nextRowStart + clampedCol;
+        const nextRow = rows[row + 1];
+        newCursor = curLineStart + nextRow.start + Math.min(col, nextRow.length);
       } else if (afterNl !== -1) {
         // Next logical line, first visual row
         const nextLineStart = afterNl + 1;
         const afterNextNl = curPrompt.indexOf('\n', nextLineStart);
-        const nextLineLen = afterNextNl === -1 ? curPrompt.length - nextLineStart : afterNextNl - nextLineStart;
-        newCursor = nextLineStart + Math.min(vc, nextLineLen); // allow vc==nextLineLen
+        const nextLineEnd = afterNextNl === -1 ? curPrompt.length : afterNextNl;
+        const nextLine = curPrompt.slice(nextLineStart, nextLineEnd);
+        const nextRows = getVisualRows(nextLine, wrapWidth);
+        const firstRow = nextRows[0];
+        newCursor = nextLineStart + Math.min(col, firstRow.length);
       }
       cursorRef.current = newCursor;
       setCursorPos(newCursor);

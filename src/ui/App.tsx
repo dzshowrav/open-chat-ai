@@ -421,12 +421,14 @@ export const App: React.FC = () => {
       const before = curPrompt.slice(0, cur);
       const curLineStart = before.lastIndexOf('\n') + 1;
       const posInLine = cur - curLineStart;
-      // Wrap width = Ink's actual maxWidth for the prompt Text node:
-      //   Desktop: cols - border(2) - padding(2) - "> "(2) = cols - 6
-      //   Mobile:  cols - padding(2) - "> "(2) = cols - 4
-      const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 4 : 6));
-      const vr = Math.floor(posInLine / wrapWidth);
-      const vc = posInLine % wrapWidth;
+      // Desktop: root paddingX(1→2) + border(2) + prompt padding(2) + "> "(2) = 8
+      // Mobile:  none + none + padding(2) + "> "(2) = 4
+      const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 4 : 8));
+      // Fix: wrap-ansi with hard:true fits EXACTLY wrapWidth chars per row.
+      // PosInLine=wrapWidth (after last char) is still on row 0 (col wrapWidth), NOT row 1 col 0.
+      // Formula: vr = floor(max(0, pos-1)/W), vc = ((max(0,pos-1) % W) + 1)
+      const vr = posInLine === 0 ? 0 : Math.floor((posInLine - 1) / wrapWidth);
+      const vc = posInLine === 0 ? 0 : ((posInLine - 1) % wrapWidth) + 1;
       let newCursor = cur;
       if (vr > 0) {
         // Same logical line, previous visual row
@@ -435,10 +437,10 @@ export const App: React.FC = () => {
         // Previous logical line, last visual row
         const prevLineStart = before.slice(0, curLineStart - 1).lastIndexOf('\n') + 1;
         const prevLineLen = curLineStart - prevLineStart - 1;
-        const prevVisualRows = Math.max(1, Math.ceil(prevLineLen / wrapWidth));
-        const lastRowStart = (prevVisualRows - 1) * wrapWidth;
+        const prevVrows = Math.max(1, Math.ceil(prevLineLen / wrapWidth));
+        const lastRowStart = (prevVrows - 1) * wrapWidth;
         const lastRowLen = Math.max(0, prevLineLen - lastRowStart);
-        const col = Math.min(vc, Math.max(0, lastRowLen - 1));
+        const col = Math.min(vc, lastRowLen); // allow vc==lastRowLen (end-of-row)
         newCursor = prevLineStart + lastRowStart + col;
       }
       cursorRef.current = newCursor;
@@ -454,23 +456,25 @@ export const App: React.FC = () => {
       const lineEnd = afterNl === -1 ? curPrompt.length : afterNl;
       const lineLen = lineEnd - curLineStart;
       const posInLine = cur - curLineStart;
-      const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 4 : 6));
-      const vr = Math.floor(posInLine / wrapWidth);
-      const vc = posInLine % wrapWidth;
+      // Desktop: root paddingX(1→2) + border(2) + prompt padding(2) + "> "(2) = 8
+      // Mobile:  none + none + padding(2) + "> "(2) = 4
+      const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 4 : 8));
+      const vr = posInLine === 0 ? 0 : Math.floor((posInLine - 1) / wrapWidth);
+      const vc = posInLine === 0 ? 0 : ((posInLine - 1) % wrapWidth) + 1;
       const visualRows = Math.max(1, Math.ceil(lineLen / wrapWidth));
       let newCursor = cur;
       if (vr < visualRows - 1) {
         // Same logical line, next visual row
         const nextRowStart = (vr + 1) * wrapWidth;
         const nextRowLen = Math.max(0, lineLen - nextRowStart);
-        const clampedCol = Math.min(vc, Math.max(0, nextRowLen - 1));
+        const clampedCol = Math.min(vc, nextRowLen); // allow vc==nextRowLen
         newCursor = curLineStart + nextRowStart + clampedCol;
       } else if (afterNl !== -1) {
         // Next logical line, first visual row
         const nextLineStart = afterNl + 1;
         const afterNextNl = curPrompt.indexOf('\n', nextLineStart);
         const nextLineLen = afterNextNl === -1 ? curPrompt.length - nextLineStart : afterNextNl - nextLineStart;
-        newCursor = nextLineStart + Math.min(vc, Math.max(0, nextLineLen - 1));
+        newCursor = nextLineStart + Math.min(vc, nextLineLen); // allow vc==nextLineLen
       }
       cursorRef.current = newCursor;
       setCursorPos(newCursor);

@@ -614,7 +614,7 @@ private static activeServers: Map<
 | `chrome-devtools` | DOM, console, network, performance inspection |
 | `sequential_thinking` | sequentialthinking (reasoning chain)     |
 | `gh_grep`     | searchGitHub (real-world code patterns)           |
-| `supermemory` | add/search/profile/list memory                    |
+
 
 ---
 

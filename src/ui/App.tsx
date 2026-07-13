@@ -424,7 +424,7 @@ export const App: React.FC = () => {
       // Wrap width = Ink's actual maxWidth for the prompt Text node:
       //   Desktop: cols - border(2) - padding(2) - "> "(2) = cols - 6
       //   Mobile:  cols - padding(2) - "> "(2) = cols - 4
-      const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 4 : 6));
+      const wrapWidth = Math.max(10, (stdout?.columns || 80));
       const vr = Math.floor(posInLine / wrapWidth);
       const vc = posInLine % wrapWidth;
       let newCursor = cur;
@@ -454,7 +454,7 @@ export const App: React.FC = () => {
       const lineEnd = afterNl === -1 ? curPrompt.length : afterNl;
       const lineLen = lineEnd - curLineStart;
       const posInLine = cur - curLineStart;
-      const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 4 : 6));
+      const wrapWidth = Math.max(10, (stdout?.columns || 80));
       const vr = Math.floor(posInLine / wrapWidth);
       const vc = posInLine % wrapWidth;
       const visualRows = Math.max(1, Math.ceil(lineLen / wrapWidth));

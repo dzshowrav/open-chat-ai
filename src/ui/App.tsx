@@ -234,10 +234,16 @@ export const App: React.FC = () => {
     if (pasteBufRef.current) {
       const buf = pasteBufRef.current;
       pasteBufRef.current = '';
-      if (buf.length > 3 && !pasteDetectedRef.current) {
-        pasteDetectedRef.current = true;
-        prePasteLenRef.current = cursorRef.current; // cursor position = where paste starts
-        pasteLenRef.current = buf.length;
+      if (buf.length >= 3) {
+        if (pasteDetectedRef.current && cursorRef.current === prePasteLenRef.current + pasteLenRef.current) {
+          // Same paste continuing (cursor still at paste end) → accumulate
+          pasteLenRef.current += buf.length;
+        } else {
+          // New paste (cursor moved or first detection) → reset tracking
+          pasteDetectedRef.current = true;
+          prePasteLenRef.current = cursorRef.current;
+          pasteLenRef.current = buf.length;
+        }
       }
       // Insert at current cursor position
       const cursor = cursorRef.current;

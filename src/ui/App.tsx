@@ -422,7 +422,7 @@ export const App: React.FC = () => {
       const curLineStart = before.lastIndexOf('\n') + 1;
       const posInLine = cur - curLineStart;
       // Content width inside bordered+padding box (no prefix)
-      const contentWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 6 : 8));
+      const contentWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 5 : 7));
       // "> " prefix only on the first logical line of the entire prompt
       const prefixLen = (curLineStart === 0) ? 2 : 0;
       // Position in rendered text (prefix + prompt text)
@@ -460,7 +460,7 @@ export const App: React.FC = () => {
       const lineEnd = afterNl === -1 ? curPrompt.length : afterNl;
       const lineLen = lineEnd - curLineStart;
       const posInLine = cur - curLineStart;
-      const contentWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 6 : 8));
+      const contentWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 5 : 7));
       const prefixLen = (curLineStart === 0) ? 2 : 0;
       const renderedPos = posInLine + prefixLen;
       const vr = Math.floor(renderedPos / contentWidth);

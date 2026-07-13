@@ -432,29 +432,55 @@ export const App: React.FC = () => {
     if (key.upArrow) {
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
       const before = prompt.slice(0, cursorPos);
-      const prevNl = before.lastIndexOf('\n');
-      if (prevNl !== -1) {
-        const col = cursorPos - prevNl - 1;
-        const beforePrev = before.slice(0, prevNl);
-        const prevLineStart = beforePrev.lastIndexOf('\n') + 1;
-        const prevLineLen = prevNl - prevLineStart;
-        setCursorPos(prevLineStart + Math.min(col, prevLineLen));
+      const curLineStart = before.lastIndexOf('\n') + 1;
+      const termCols = stdout?.columns || 80;
+      const posInLine = cursorPos - curLineStart;
+      const visualRow = Math.floor(posInLine / termCols);
+      const visualCol = posInLine % termCols;
+      if (visualRow > 0) {
+        // Same logical line, previous visual row
+        setCursorPos(curLineStart + (visualRow - 1) * termCols + visualCol);
+      } else if (curLineStart > 0) {
+        // Previous logical line, last visual row, same column
+        const prevLineStart = before.slice(0, curLineStart - 1).lastIndexOf('\n') + 1;
+        const prevLineLen = curLineStart - prevLineStart - 1;
+        const prevVisualRows = Math.max(1, Math.ceil(prevLineLen / termCols));
+        const lastRowStart = (prevVisualRows - 1) * termCols;
+        const lastRowLen = prevLineLen - lastRowStart;
+        const targetCol = Math.min(visualCol, Math.max(0, lastRowLen - 1));
+        setCursorPos(prevLineStart + lastRowStart + targetCol);
       }
+      // First visual row of first line → nowhere to go
       return;
     }
     if (key.downArrow) {
       if (pasteDetectedRef.current) pasteDetectedRef.current = false;
-      const after = prompt.slice(cursorPos);
-      const nextNl = after.indexOf('\n');
-      if (nextNl !== -1) {
-        const curLineStart = prompt.slice(0, cursorPos).lastIndexOf('\n') + 1;
-        const col = cursorPos - curLineStart;
-        const nextLineStart = cursorPos + nextNl + 1;
-        const afterNext = prompt.slice(nextLineStart);
-        const nextLineEnd = afterNext.indexOf('\n');
-        const nextLineLen = nextLineEnd === -1 ? afterNext.length : nextLineEnd;
-        setCursorPos(nextLineStart + Math.min(col, nextLineLen));
+      const before = prompt.slice(0, cursorPos);
+      const curLineStart = before.lastIndexOf('\n') + 1;
+      const afterNl = prompt.indexOf('\n', Math.max(cursorPos, curLineStart));
+      const lineEnd = afterNl === -1 ? prompt.length : afterNl;
+      const lineLen = lineEnd - curLineStart;
+      const termCols = stdout?.columns || 80;
+      const posInLine = cursorPos - curLineStart;
+      const visualRow = Math.floor(posInLine / termCols);
+      const visualCol = posInLine % termCols;
+      const visualRows = Math.max(1, Math.ceil(lineLen / termCols));
+      if (visualRow < visualRows - 1) {
+        // Same logical line, next visual row
+        const nextRowStart = (visualRow + 1) * termCols;
+        const nextRowLen = Math.min(termCols, lineLen - nextRowStart);
+        const targetCol = Math.min(visualCol, Math.max(0, nextRowLen - 1));
+        setCursorPos(curLineStart + nextRowStart + targetCol);
+      } else if (afterNl !== -1) {
+        // Next logical line, first visual row, same column
+        const nextLineStart = afterNl + 1;
+        const afterNextNl = prompt.indexOf('\n', nextLineStart);
+        const nextLine = afterNextNl === -1 ? prompt.slice(nextLineStart) : prompt.slice(nextLineStart, afterNextNl);
+        const nextLen = nextLine.length;
+        const targetCol = Math.min(visualCol, Math.max(0, nextLen - 1));
+        setCursorPos(nextLineStart + targetCol);
       }
+      // Last visual row of last line → nowhere to go
       return;
     }
 

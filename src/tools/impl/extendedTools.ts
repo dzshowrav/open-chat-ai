@@ -535,10 +535,8 @@ export function registerExtendedTools(): void {
       try {
         const { ApiEngine } = await import('../../api/apiEngine.js');
         const { ProviderRepository } = await import('../../database/repositories/providerRepository.js');
-        const { ModelRepository } = await import('../../database/repositories/modelRepository.js');
 
         const providerRepo = new ProviderRepository();
-        const modelRepo = new ModelRepository();
         const st = stateManager.getState();
 
         const provider = st.activeProviderId ? providerRepo.getProvider(st.activeProviderId) : null;
@@ -806,7 +804,7 @@ Be thorough. The user is relying on you to complete this autonomously.`;
         const html = await fetchUrl(`https://html.duckduckgo.com/html/?q=${q}`);
         const webResults = parseDDGResults(html);
         if (webResults.length > 0) {
-          const formatted = webResults.map((r: any, idx: number) => `• ${r.title}\n  Link: ${r.url}\n  Description: ${r.snippet}`).join('\n');
+          const formatted = webResults.map((r: any, _idx: number) => `• ${r.title}\n  Link: ${r.url}\n  Description: ${r.snippet}`).join('\n');
           return [
             `Skill "${args.skillName}" was not found locally.`,
             `Searching the internet fallback results found:`,
@@ -815,7 +813,7 @@ Be thorough. The user is relying on you to complete this autonomously.`;
             `You can download/copy these references into: .openchat/skills/${args.skillName}/SKILL.md`
           ].join('\n');
         }
-      } catch {}
+      } catch (e) { console.error('[extendedTools] Skill search failed:', e); }
 
       const availableList = 'react-expert, typescript-pro, architect, debugging-wizard, security-and-hardening, performance-optimization, test-driven-development, code-reviewer';
       return [
@@ -885,7 +883,7 @@ Be thorough. The user is relying on you to complete this autonomously.`;
           const html = await fetchUrl(`https://html.duckduckgo.com/html/?q=${q}`);
           const webResults = parseDDGResults(html);
           if (webResults.length > 0) {
-            const formatted = webResults.map((r: any, idx: number) => `• ${r.title}\n  Link: ${r.url}\n  Description: ${r.snippet}`).join('\n');
+            const formatted = webResults.map((r: any, _idx: number) => `• ${r.title}\n  Link: ${r.url}\n  Description: ${r.snippet}`).join('\n');
             return [
               `No local skills matched "${args.query}".`,
               `Searching the internet fallback results found:`,
@@ -894,7 +892,7 @@ Be thorough. The user is relying on you to complete this autonomously.`;
               `You can download/copy these references into: .openchat/skills/<skill-name>/SKILL.md`
             ].join('\n');
           }
-        } catch {}
+        } catch (e) { console.error('[extendedTools] Skill search web fallback failed:', e); }
 
         return [
           `No skills found matching "${args.query}".`,
@@ -1196,7 +1194,7 @@ Be thorough. The user is relying on you to complete this autonomously.`;
           const html = await fetchUrl(`https://html.duckduckgo.com/html/?q=${q}`);
           const webResults = parseDDGResults(html);
           if (webResults.length > 0) {
-            const formatted = webResults.map((r: any, idx: number) => `• ${r.title}\n  Link: ${r.url}\n  Description: ${r.snippet}`).join('\n');
+            const formatted = webResults.map((r: any, _idx: number) => `• ${r.title}\n  Link: ${r.url}\n  Description: ${r.snippet}`).join('\n');
             return [
               'No MCP servers configured or enabled locally.',
               `Here are some recommended public MCP servers found on the internet:`,
@@ -1205,7 +1203,7 @@ Be thorough. The user is relying on you to complete this autonomously.`;
               'To configure and add an MCP server, use the /mcp command.'
             ].join('\n');
           }
-        } catch {}
+        } catch (e) { console.error('[extendedTools] MCP search web fallback 2 failed:', e); }
 
         return [
           'No MCP servers configured or enabled.',
@@ -1225,7 +1223,7 @@ Be thorough. The user is relying on you to complete this autonomously.`;
           const html = await fetchUrl(`https://html.duckduckgo.com/html/?q=${q}`);
           const webResults = parseDDGResults(html);
           if (webResults.length > 0) {
-            const formatted = webResults.map((r: any, idx: number) => `• ${r.title}\n  Link: ${r.url}\n  Description: ${r.snippet}`).join('\n');
+            const formatted = webResults.map((r: any, _idx: number) => `• ${r.title}\n  Link: ${r.url}\n  Description: ${r.snippet}`).join('\n');
             return [
               `No local MCP servers matching "${args.server}" were found.`,
               `Searching the internet fallback results found:`,
@@ -1234,7 +1232,7 @@ Be thorough. The user is relying on you to complete this autonomously.`;
               `You can register these MCP servers using the /mcp command.`
             ].join('\n');
           }
-        } catch {}
+        } catch (e) { console.error('[extendedTools] MCP server search fallback failed:', e); }
 
         return `No MCP servers matching "${args.server}" found locally.`;
       }
@@ -1245,7 +1243,7 @@ Be thorough. The user is relying on you to complete this autonomously.`;
         dynamicResources = (McpManager as any).listResources
           ? await (McpManager as any).listResources(args.server)
           : null;
-      } catch {}
+      } catch (e) { console.error('[extendedTools] Error listing MCP resources:', e); }
 
       if (dynamicResources && dynamicResources.length > 0) {
         return `MCP Resources (${dynamicResources.length}):\n${dynamicResources.map((r: any) => `• [${r.server}] ${r.uri} — ${r.name || ''}`).join('\n')}`;

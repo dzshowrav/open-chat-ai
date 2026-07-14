@@ -8,45 +8,11 @@ import { MarkdownWorker } from '../components/MarkdownWorker.js';
 import { DiffCard, WriteFileCard, EditCard } from '../components/DiffCard.js';
 import { ToolStatusTitle } from '../components/tool-status-title.js';
 import { ToolErrorCard } from '../components/tool-error-card.js';
-import { ToolCountSummary } from '../components/tool-count-summary.js';
 import { ShellSubmessageMotion } from '../components/shell-submessage-motion.js';
 import { ToolCallStreamCard } from '../components/ToolCallStreamCard.js';
 import { SettingRepository } from '../../database/repositories/settingRepository.js';
 
 const settingRepo = new SettingRepository();
-function getHighlightBgColor(baseBg: string, darkMode: boolean): string {
-  let hex = baseBg.trim();
-  if (hex.startsWith('#')) {
-    hex = hex.slice(1);
-  }
-  if (hex.length === 3) {
-    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-  }
-  if (hex.length !== 6) {
-    return darkMode ? '#1a1a1a' : '#f5f5f5';
-  }
-  
-  let r = parseInt(hex.slice(0, 2), 16);
-  let g = parseInt(hex.slice(2, 4), 16);
-  let b = parseInt(hex.slice(4, 6), 16);
-  
-  if (darkMode) {
-    r = Math.min(255, r + 15);
-    g = Math.min(255, g + 15);
-    b = Math.min(255, b + 18);
-  } else {
-    r = Math.max(0, r - 12);
-    g = Math.max(0, g - 12);
-    b = Math.max(0, b - 10);
-  }
-  
-  const toHex = (c: number) => {
-    const h = c.toString(16);
-    return h.length === 1 ? '0' + h : h;
-  };
-  
-  return '#' + toHex(r) + toHex(g) + toHex(b);
-}
 
 let cachedWords: Record<string, string> | null = null;
 
@@ -293,7 +259,7 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile, isUltraCompact
         
         {toolCalls.length > 0 && (
           <Box flexDirection="column" marginLeft={0} marginY={isMobile ? 0.1 : 0.2}>
-            {toolCalls.map((call: any, cIdx: number) => {
+            {toolCalls.map((call: Record<string, any>, cIdx: number) => {
               const funcName = call.function?.name || 'unknown';
               let argsObj: any = {};
               if (call.function?.arguments) {
@@ -360,7 +326,7 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile, isUltraCompact
     // Lookup actual tool name from the matching assistant message's tool_calls
     let actualToolName = 'Action';
     let baseToolName = 'Action';
-    const toolCallId = (msg as any).tool_call_id;
+    const toolCallId = msg.tool_call_id;
     if (toolCallId) {
       for (const m of allMessages) {
         if (m.role === 'assistant') {
@@ -426,7 +392,6 @@ const MessageItem = ({ msg, idx, isActive, allMessages, isMobile, isUltraCompact
 
 const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: string | null; isMobile: boolean; isUltraCompact: boolean }> = ({ startTime, activeToolName, isMobile, isUltraCompact }) => {
   const theme = themeManager.getCurrentTheme();
-  const [text, setText] = useState('');
   const [reasoning, setReasoning] = useState('');
 
   useEffect(() => {
@@ -489,7 +454,6 @@ const StreamingResponse: React.FC<{ startTime: number | null; activeToolName: st
 };
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({ messages, state }) => {
-  const theme = themeManager.getCurrentTheme();
   const { stdout } = useStdout();
   const rows = stdout?.rows || 24;
   const isMobile = rows < 18;

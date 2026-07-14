@@ -29,7 +29,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ query, state, on
     setSelectedIndex(0);
   }, [filtered.length]);
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.escape) { onClose(); return; }
     if (key.upArrow) {
       setSelectedIndex(prev => (prev > 0 ? prev - 1 : filtered.length - 1));

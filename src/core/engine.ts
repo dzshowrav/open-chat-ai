@@ -330,10 +330,10 @@ export class AppEngine {
     const walPath = dbPath + '-wal';
     const shmPath = dbPath + '-shm';
     if (fs.existsSync(walPath)) {
-      try { fs.unlinkSync(walPath); } catch {}
+      try { fs.unlinkSync(walPath); } catch (e) { console.error('[engine] Error cleaning WAL:', e); }
     }
     if (fs.existsSync(shmPath)) {
-      try { fs.unlinkSync(shmPath); } catch {}
+      try { fs.unlinkSync(shmPath); } catch (e) { console.error('[engine] Error cleaning SHM:', e); }
     }
   }
 }

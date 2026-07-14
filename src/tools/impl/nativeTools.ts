@@ -1,5 +1,5 @@
 import { ToolManager } from '../toolManager.js';
-import { exec, spawn, ChildProcess } from 'child_process';
+import { spawn, ChildProcess } from 'child_process';
 import { stateManager } from '../../core/state.js';
 import { eventBus } from '../../core/events.js';
 import { initDatabase } from '../../database/connection.js';

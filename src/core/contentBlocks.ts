@@ -113,7 +113,7 @@ export function parseToolArgs(toolCall: any): Record<string, any> {
  * (e.g., file path from 'path', URL from 'url', search query from 'query').
  */
 export function getToolTargetDisplay(
-  toolName: string,
+  _toolName: string,
   args: Record<string, any>
 ): string {
   const targetStr = String(

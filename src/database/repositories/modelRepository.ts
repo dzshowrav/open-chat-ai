@@ -1,5 +1,6 @@
 import { initDatabase } from '../connection.js';
 import { Model } from '../../types/index.js';
+import type { ModelRow } from '../../types/database.js';
 
 export class ModelRepository {
   private getDb() {
@@ -41,23 +42,23 @@ export class ModelRepository {
 
   getModel(id: number): Model | undefined {
     const db = this.getDb();
-    const row = db.prepare("SELECT * FROM models WHERE id = ?").get(id) as any;
+    const row = db.prepare("SELECT * FROM models WHERE id = ?").get(id) as ModelRow | undefined;
     return row ? this.mapRow(row) : undefined;
   }
 
   getModelByStringId(providerId: number, modelId: string): Model | undefined {
     const db = this.getDb();
-    const row = db.prepare("SELECT * FROM models WHERE provider_id = ? AND model_id = ?").get(providerId, modelId) as any;
+    const row = db.prepare("SELECT * FROM models WHERE provider_id = ? AND model_id = ?").get(providerId, modelId) as ModelRow | undefined;
     return row ? this.mapRow(row) : undefined;
   }
 
   listModels(providerId?: number): Model[] {
     const db = this.getDb();
-    let rows: any[];
+    let rows: ModelRow[];
     if (providerId !== undefined) {
-      rows = db.prepare("SELECT * FROM models WHERE provider_id = ? ORDER BY favorite DESC, display_name ASC").all(providerId) as any[];
+      rows = db.prepare("SELECT * FROM models WHERE provider_id = ? ORDER BY favorite DESC, display_name ASC").all(providerId) as unknown as ModelRow[];
     } else {
-      rows = db.prepare("SELECT * FROM models ORDER BY provider_id ASC, favorite DESC, display_name ASC").all() as any[];
+      rows = db.prepare("SELECT * FROM models ORDER BY provider_id ASC, favorite DESC, display_name ASC").all() as unknown as ModelRow[];
     }
     return rows.map(r => this.mapRow(r));
   }
@@ -99,7 +100,7 @@ export class ModelRepository {
     stmt.run(favorite ? 1 : 0, id);
   }
 
-  private mapRow(row: any): Model {
+  private mapRow(row: ModelRow): Model {
     return {
       id: row.id,
       provider_id: row.provider_id,

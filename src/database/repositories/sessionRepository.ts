@@ -1,5 +1,6 @@
 import { initDatabase, runInTransaction } from '../connection.js';
 import { Session, Message } from '../../types/index.js';
+import type { SessionRow, MessageRow } from '../../types/database.js';
 
 export class SessionRepository {
   private getDb() {
@@ -34,17 +35,17 @@ export class SessionRepository {
 
   getSession(id: number): Session | undefined {
     const db = this.getDb();
-    const row = db.prepare("SELECT * FROM sessions WHERE id = ?").get(id) as any;
+    const row = db.prepare("SELECT * FROM sessions WHERE id = ?").get(id) as SessionRow | undefined;
     return row ? this.mapSessionRow(row) : undefined;
   }
 
   listSessions(workspaceId?: number): Session[] {
     const db = this.getDb();
-    let rows: any[];
+    let rows: SessionRow[];
     if (workspaceId !== undefined) {
-      rows = db.prepare("SELECT * FROM sessions WHERE workspace_id = ? AND archived = 0 ORDER BY updated_at DESC").all(workspaceId) as any[];
+      rows = db.prepare("SELECT * FROM sessions WHERE workspace_id = ? AND archived = 0 ORDER BY updated_at DESC").all(workspaceId) as unknown as SessionRow[];
     } else {
-      rows = db.prepare("SELECT * FROM sessions WHERE archived = 0 ORDER BY updated_at DESC").all() as any[];
+      rows = db.prepare("SELECT * FROM sessions WHERE archived = 0 ORDER BY updated_at DESC").all() as unknown as SessionRow[];
     }
     return rows.map(r => this.mapSessionRow(r));
   }
@@ -119,11 +120,11 @@ export class SessionRepository {
 
   getMessages(sessionId: number): Message[] {
     const db = this.getDb();
-    const rows = db.prepare("SELECT * FROM messages WHERE session_id = ? ORDER BY id ASC").all(sessionId) as any[];
+    const rows = db.prepare("SELECT * FROM messages WHERE session_id = ? ORDER BY id ASC").all(sessionId) as unknown as MessageRow[];
     return rows.map(r => this.mapMessageRow(r));
   }
 
-  private mapSessionRow(row: any): Session {
+  private mapSessionRow(row: SessionRow): Session {
     return {
       id: row.id,
       title: row.title,
@@ -139,11 +140,11 @@ export class SessionRepository {
     };
   }
 
-  private mapMessageRow(row: any): Message {
+  private mapMessageRow(row: MessageRow): Message {
     return {
       id: row.id,
       session_id: row.session_id,
-      role: row.role,
+      role: row.role as 'system' | 'user' | 'assistant' | 'tool',
       content: row.content,
       reasoning_content: row.reasoning_content || undefined,
       tool_calls: row.tool_calls || undefined,

@@ -1,5 +1,6 @@
 import { initDatabase, runInTransaction } from '../connection.js';
 import { Provider } from '../../types/index.js';
+import type { ProviderRow } from '../../types/database.js';
 import crypto from 'crypto';
 
 export class ProviderRepository {
@@ -33,19 +34,19 @@ export class ProviderRepository {
 
   getProvider(id: number): Provider | undefined {
     const db = this.getDb();
-    const row = db.prepare("SELECT * FROM providers WHERE id = ?").get(id) as any;
+    const row = db.prepare("SELECT * FROM providers WHERE id = ?").get(id) as ProviderRow | undefined;
     return row ? this.mapRow(row) : undefined;
   }
 
   getProviderByName(name: string): Provider | undefined {
     const db = this.getDb();
-    const row = db.prepare("SELECT * FROM providers WHERE name = ?").get(name) as any;
+    const row = db.prepare("SELECT * FROM providers WHERE name = ?").get(name) as ProviderRow | undefined;
     return row ? this.mapRow(row) : undefined;
   }
 
   listProviders(): Provider[] {
     const db = this.getDb();
-    const rows = db.prepare("SELECT * FROM providers ORDER BY is_default DESC, name ASC").all() as any[];
+    const rows = db.prepare("SELECT * FROM providers ORDER BY is_default DESC, name ASC").all() as unknown as ProviderRow[];
     return rows.map(r => this.mapRow(r));
   }
 
@@ -83,7 +84,7 @@ export class ProviderRepository {
     });
   }
 
-  private mapRow(row: any): Provider {
+  private mapRow(row: ProviderRow): Provider {
     return {
       id: row.id,
       uuid: row.uuid,

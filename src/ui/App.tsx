@@ -34,10 +34,11 @@ import { AgentRepository } from '../database/repositories/agentRepository.js';
 import { SkillsManager, Skill } from '../skills/skillsManager.js';
 import { initDatabase, runInTransaction } from '../database/connection.js';
 import { Message, Provider, Model, Agent, Session } from '../types/index.js';
+import type { McpServerRow } from '../types/database.js';
 import { ApiEngine } from '../api/apiEngine.js';
 import { ContextBuilder } from '../core/contextBuilder.js';
 import { ToolManager } from '../tools/toolManager.js';
-import { executeToolCalls, buildApiMessages, getToolNiceName, getToolTargetDisplay } from '../core/contentBlocks.js';
+import { executeToolCalls, buildApiMessages } from '../core/contentBlocks.js';
 
 const renderPromptPreview = (text: string, cursorIdx: number) => {
   if (!text) {
@@ -91,7 +92,7 @@ export const App: React.FC = () => {
   const cursorRef = useRef(0);
   promptRef.current = prompt;
   cursorRef.current = cursorPos;
-  const enterTimerRef = useRef<any>(null); // long-press Enter detection timer id
+  const enterTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const enterCancelledRef = useRef(false);
 
   // Computed input offset — reads stdout.rows directly to avoid closure staleness on resize
@@ -102,7 +103,7 @@ export const App: React.FC = () => {
   };
   // Char batching: accumulates rapid chars and flushes after 20ms silence
   const pasteBufRef = useRef('');
-  const pasteTimerRef = useRef<any>(null);
+  const pasteTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // Paste detection: tracks input timing to distinguish paste bursts from typing
   const lastInputTimeRef = useRef(0);
   const isPastingRef = useRef(false);
@@ -119,7 +120,7 @@ export const App: React.FC = () => {
   const [availableAgents, setAvailableAgents] = useState<Agent[]>([]);
   const [availableSessions, setAvailableSessions] = useState<Session[]>([]);
   const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
-  const [availableMcpServers, setAvailableMcpServers] = useState<any[]>([]);
+  const [availableMcpServers, setAvailableMcpServers] = useState<McpServerRow[]>([]);
 
   const [pendingPermissionRequest, setPendingPermissionRequest] = useState<{
     toolName: string;
@@ -226,7 +227,7 @@ export const App: React.FC = () => {
   const flushPasteBuffer = (): void => {
     if (pasteTimerRef.current) {
       clearTimeout(pasteTimerRef.current);
-      pasteTimerRef.current = null;
+      pasteTimerRef.current = undefined;
     }
     if (pasteBufRef.current) {
       const buf = pasteBufRef.current;
@@ -387,7 +388,7 @@ export const App: React.FC = () => {
         // Shift+Enter / Ctrl+Enter submits
         if (enterTimerRef.current) {
           clearTimeout(enterTimerRef.current);
-          enterTimerRef.current = null;
+          enterTimerRef.current = undefined;
         }
         handlePromptSubmit();
       } else if (key.meta) {
@@ -400,20 +401,20 @@ export const App: React.FC = () => {
         // Cancel any pending submit timer from earlier plain Enter
         if (enterTimerRef.current) {
           clearTimeout(enterTimerRef.current);
-          enterTimerRef.current = null;
+          enterTimerRef.current = undefined;
           enterCancelledRef.current = true;
         }
       } else {
         // Standard Enter — long-press detection:
         //   Single quick tap → submit after 180ms debounce
         //   Hold (auto-repeat kicks in) → insert newline
-        const timerPending = enterTimerRef.current !== null;
+        const timerPending = enterTimerRef.current !== undefined;
 
         if (!timerPending) {
           // First press — schedule submit after a short debounce
           enterCancelledRef.current = false;
           enterTimerRef.current = setTimeout(() => {
-            enterTimerRef.current = null;
+            enterTimerRef.current = undefined;
             if (!enterCancelledRef.current && promptRef.current.trim()) {
               handlePromptSubmit();
             }
@@ -422,7 +423,7 @@ export const App: React.FC = () => {
           // Auto-repeat detected within debounce window → long press → insert newline
           enterCancelledRef.current = true;
           clearTimeout(enterTimerRef.current);
-          enterTimerRef.current = null;
+          enterTimerRef.current = undefined;
           const newPrompt = promptRef.current + '\n';
           promptRef.current = newPrompt;
           cursorRef.current = newPrompt.length;
@@ -532,7 +533,7 @@ export const App: React.FC = () => {
       // Any character input cancels a pending Enter-submit timer
       if (enterTimerRef.current) {
         clearTimeout(enterTimerRef.current);
-        enterTimerRef.current = null;
+        enterTimerRef.current = undefined;
         enterCancelledRef.current = true;
       }
 
@@ -555,7 +556,7 @@ export const App: React.FC = () => {
         // Flush any accumulated paste chars immediately and block further accumulation
         if (pasteTimerRef.current) {
           clearTimeout(pasteTimerRef.current);
-          pasteTimerRef.current = null;
+          pasteTimerRef.current = undefined;
         }
         pasteBufRef.current = '';
         isPastingRef.current = false;
@@ -668,7 +669,7 @@ export const App: React.FC = () => {
     } else if (cmd === '/mcp') {
       try {
         const db = initDatabase();
-        const list = db.prepare("SELECT * FROM mcp_servers").all() as any[];
+        const list = db.prepare("SELECT * FROM mcp_servers").all() as unknown as McpServerRow[];
         setAvailableMcpServers(list);
         setActiveDialog('mcp-list');
       } catch (err: any) {
@@ -880,7 +881,7 @@ export const App: React.FC = () => {
   };
 
   // Entry point — starts the streaming session
-  const triggerAiCompletion = async (sessionId: number, userText: string) => {
+  const triggerAiCompletion = async (sessionId: number, _userText: string) => {
     stateManager.setState({ isStreaming: true, streamingStartTime: Date.now() });
 
     try {
@@ -983,7 +984,7 @@ export const App: React.FC = () => {
 
   const handleThemeSelect = (themeId: string) => {
     themeManager.setTheme(themeId);
-    stateManager.setState({ activeThemeId: themeId } as any);
+    stateManager.setState({ activeThemeId: themeId });
     setActiveDialog('none');
   };
 
@@ -1333,12 +1334,12 @@ export const App: React.FC = () => {
             <ThemeSwitcherDialog
               onPreview={(themeId) => {
                 themeManager.setTheme(themeId);
-                stateManager.setState({ activeThemeId: themeId } as any);
+                stateManager.setState({ activeThemeId: themeId });
               }}
               onSelect={handleThemeSelect}
               onClose={(revertThemeId) => {
                 themeManager.setTheme(revertThemeId);
-                stateManager.setState({ activeThemeId: revertThemeId } as any);
+                stateManager.setState({ activeThemeId: revertThemeId });
                 setActiveDialog('none');
               }}
             />

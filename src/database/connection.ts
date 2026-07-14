@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { fileURLToPath } from 'node:url';
+import type { ColumnInfo, CountResult } from '../types/database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,7 +51,7 @@ export function initDatabase(): DatabaseSync {
 
   // Dynamic migration: Ensure tool_call_id column exists in messages table
   try {
-    const columns = db.prepare("PRAGMA table_info(messages);").all() as any[];
+    const columns = db.prepare("PRAGMA table_info(messages);").all() as unknown as ColumnInfo[];
     const hasToolCallId = columns.some(c => c.name === 'tool_call_id');
     if (!hasToolCallId) {
       db.exec("ALTER TABLE messages ADD COLUMN tool_call_id TEXT;");
@@ -85,7 +86,7 @@ export function runInTransaction<T>(db: DatabaseSync, fn: () => T): T {
 
 function seedDefaults(db: DatabaseSync): void {
   // Seed initial settings if table is empty
-  const checkSettings = db.prepare("SELECT COUNT(*) as count FROM settings").get() as { count: number };
+  const checkSettings = db.prepare("SELECT COUNT(*) as count FROM settings").get() as unknown as CountResult;
   if (checkSettings.count === 0) {
     const insertSetting = db.prepare("INSERT INTO settings (key, value) VALUES (?, ?)");
     insertSetting.run('theme', JSON.stringify({ themeId: 'tokyo-night', wordWrap: true }));
@@ -94,7 +95,7 @@ function seedDefaults(db: DatabaseSync): void {
   }
 
   // Seed default agents if empty
-  const checkAgents = db.prepare("SELECT COUNT(*) as count FROM agents").get() as { count: number };
+  const checkAgents = db.prepare("SELECT COUNT(*) as count FROM agents").get() as unknown as CountResult;
   if (checkAgents.count === 0) {
     const insertAgent = db.prepare(`
       INSERT INTO agents (name, description, icon, prompt, reasoning_level, temperature, default_skills, allowed_tools, enabled, built_in)
@@ -137,7 +138,7 @@ function seedDefaults(db: DatabaseSync): void {
   }
 
   // Seed default tool permissions if empty
-  const checkPermissions = db.prepare("SELECT COUNT(*) as count FROM permissions").get() as { count: number };
+  const checkPermissions = db.prepare("SELECT COUNT(*) as count FROM permissions").get() as unknown as CountResult;
   if (checkPermissions.count === 0) {
     const insertPermission = db.prepare("INSERT INTO permissions (tool_name, permission) VALUES (?, ?)");
     
@@ -159,12 +160,7 @@ function seedDefaults(db: DatabaseSync): void {
 
 export function closeDatabase(): void {
   if (dbInstance) {
-    // In node:sqlite DatabaseSync has no explicit close method in some node releases or it does.
-    // Let's check if close exists, otherwise nullify. Node.js DatabaseSync has close().
-    const db = dbInstance as any;
-    if (typeof db.close === 'function') {
-      db.close();
-    }
+    dbInstance.close();
     dbInstance = null;
   }
 }

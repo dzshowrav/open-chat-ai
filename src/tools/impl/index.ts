@@ -425,7 +425,7 @@ export function registerBuiltInTools(): void {
         });
 
         child.on('error', (err) => finish(err));
-        child.on('close', (code) => finish());
+        child.on('close', (_code) => finish());
 
         // Timeout handling
         if (timeout > 0) {

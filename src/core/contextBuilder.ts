@@ -98,13 +98,13 @@ To make your responses highly readable, clean, and beautifully stylized in the t
             prompt += `Git Branch: ${branch}\n`;
             stateManager.setState({ gitBranch: branch });
           }
-        } catch {}
+        } catch (e) { console.error('[contextBuilder] Error reading git branch:', e); }
 
         // Check for tsconfig
         if (files.includes('tsconfig.json')) {
           prompt += `TypeScript: tsconfig.json detected — type_check tool available.\n`;
         }
-      } catch {}
+      } catch (e) { console.error('[contextBuilder] Error checking project files:', e); }
     }
 
     // 4. Tool Catalog — inject full list of available tools so AI knows its capabilities
@@ -210,7 +210,7 @@ To make your responses highly readable, clean, and beautifully stylized in the t
         prompt += memoryContext;
         prompt += 'Use search_memory tool for deeper memory searches across all sessions.\n\n';
       }
-    } catch {}
+    } catch (e) { console.error('[contextBuilder] Error loading memory context:', e); }
 
     // 6. Skills context
     try {
@@ -219,7 +219,7 @@ To make your responses highly readable, clean, and beautifully stylized in the t
         const skillsPrompt = SkillsManager.buildSkillsPrompt(skills);
         prompt += skillsPrompt;
       }
-    } catch {}
+    } catch (e) { console.error('[contextBuilder] Error loading skills:', e); }
 
     return prompt;
   }

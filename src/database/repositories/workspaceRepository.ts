@@ -1,4 +1,5 @@
 import { initDatabase } from '../connection.js';
+import type { WorkspaceRow } from '../../types/database.js';
 
 export interface Workspace {
   id: number;
@@ -37,19 +38,19 @@ export class WorkspaceRepository {
 
   getWorkspace(id: number): Workspace | undefined {
     const db = this.getDb();
-    const row = db.prepare("SELECT * FROM workspace WHERE id = ?").get(id) as any;
+    const row = db.prepare("SELECT * FROM workspace WHERE id = ?").get(id) as WorkspaceRow | undefined;
     return row ? this.mapRow(row) : undefined;
   }
 
   getWorkspaceByPath(path: string): Workspace | undefined {
     const db = this.getDb();
-    const row = db.prepare("SELECT * FROM workspace WHERE path = ?").get(path) as any;
+    const row = db.prepare("SELECT * FROM workspace WHERE path = ?").get(path) as WorkspaceRow | undefined;
     return row ? this.mapRow(row) : undefined;
   }
 
   listWorkspaces(): Workspace[] {
     const db = this.getDb();
-    const rows = db.prepare("SELECT * FROM workspace ORDER BY last_scan DESC, id DESC").all() as any[];
+    const rows = db.prepare("SELECT * FROM workspace ORDER BY last_scan DESC, id DESC").all() as unknown as WorkspaceRow[];
     return rows.map(r => this.mapRow(r));
   }
 
@@ -70,7 +71,7 @@ export class WorkspaceRepository {
     stmt.run(...params);
   }
 
-  private mapRow(row: any): Workspace {
+  private mapRow(row: WorkspaceRow): Workspace {
     return {
       id: row.id,
       name: row.name,

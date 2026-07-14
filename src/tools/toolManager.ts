@@ -1,6 +1,5 @@
 import { eventBus } from '../core/events.js';
 import { PermissionRepository } from '../database/repositories/permissionRepository.js';
-import { PermissionLevel } from '../core/constants.js';
 
 export interface ToolDefinition {
   name: string;

@@ -11,7 +11,7 @@
  *   tool:executed           →  status='completed'   → "✅ Done" + output summary
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
 import { eventBus } from '../../core/events.js';
 import { themeManager } from '../theme/themeManager.js';
@@ -32,8 +32,6 @@ export const ToolCallStreamCard: React.FC = () => {
   const theme = themeManager.getCurrentTheme();
   const [toolCalls, setToolCalls] = useState<ToolCallData[]>([]);
   const [tick, setTick] = useState(0);
-  const outputEndRef = useRef<HTMLDivElement>(null);
-
   // Animation tick for running spinners
   useEffect(() => {
     const hasActive = toolCalls.some(tc => tc.status === 'building' || tc.status === 'running');
@@ -153,7 +151,6 @@ export const ToolCallStreamCard: React.FC = () => {
         const isRunning = tc.status === 'running';
         const isReady = tc.status === 'ready';
         const isCompleted = tc.status === 'completed';
-        const isActive = isBuilding || isRunning;
         const spinnerChar = spinners[tick % spinners.length];
 
         // Extract nice name

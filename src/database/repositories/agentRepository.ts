@@ -1,5 +1,6 @@
 import { initDatabase } from '../connection.js';
 import { Agent } from '../../types/index.js';
+import type { AgentRow } from '../../types/database.js';
 
 export class AgentRepository {
   private getDb() {
@@ -31,19 +32,19 @@ export class AgentRepository {
 
   getAgent(id: number): Agent | undefined {
     const db = this.getDb();
-    const row = db.prepare("SELECT * FROM agents WHERE id = ?").get(id) as any;
+    const row = db.prepare("SELECT * FROM agents WHERE id = ?").get(id) as AgentRow | undefined;
     return row ? this.mapRow(row) : undefined;
   }
 
   getAgentByName(name: string): Agent | undefined {
     const db = this.getDb();
-    const row = db.prepare("SELECT * FROM agents WHERE name = ?").get(name) as any;
+    const row = db.prepare("SELECT * FROM agents WHERE name = ?").get(name) as AgentRow | undefined;
     return row ? this.mapRow(row) : undefined;
   }
 
   listAgents(): Agent[] {
     const db = this.getDb();
-    const rows = db.prepare("SELECT * FROM agents WHERE enabled = 1 ORDER BY built_in DESC, name ASC").all() as any[];
+    const rows = db.prepare("SELECT * FROM agents WHERE enabled = 1 ORDER BY built_in DESC, name ASC").all() as unknown as AgentRow[];
     return rows.map(r => this.mapRow(r));
   }
 
@@ -80,7 +81,7 @@ export class AgentRepository {
     stmt.run(id);
   }
 
-  private mapRow(row: any): Agent {
+  private mapRow(row: AgentRow): Agent {
     let defaultSkills: string[] = [];
     let allowedTools: string[] = [];
     try {

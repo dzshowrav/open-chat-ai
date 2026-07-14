@@ -16,6 +16,7 @@ export interface AppState {
   streamingReasoning: string;
   streamingStartTime: number | null;
   activeToolName: string | null;
+  activeThemeId: string | null;
   errorMsg: string | null;
   isUpdateAvailable: boolean;
   latestVersion: string | null;
@@ -37,6 +38,7 @@ const defaultState: AppState = {
   streamingReasoning: '',
   streamingStartTime: null,
   activeToolName: null,
+  activeThemeId: null,
   errorMsg: null,
   isUpdateAvailable: false,
   latestVersion: null

@@ -9,8 +9,6 @@ const termuxConfigDir = path.join(os.homedir(), '.termux');
 const colorsPath = path.join(termuxConfigDir, 'colors.properties');
 const backupPath = path.join(termuxConfigDir, 'colors.properties.bak');
 
-let hasBackup = false;
-
 function backupTermuxColors() {
   try {
     const isTermux = process.env.TERMUX_VERSION || fs.existsSync('/data/data/com.termux');
@@ -21,7 +19,6 @@ function backupTermuxColors() {
     }
     if (fs.existsSync(colorsPath) && !fs.existsSync(backupPath)) {
       fs.copyFileSync(colorsPath, backupPath);
-      hasBackup = true;
     }
   } catch (err) {
     // Silently consume errors
@@ -70,7 +67,6 @@ function setTermuxColors(backgroundColor: string, textColor: string) {
     // Backup if color file exists and backup doesn't
     if (fs.existsSync(colorsPath) && !fs.existsSync(backupPath)) {
       fs.copyFileSync(colorsPath, backupPath);
-      hasBackup = true;
     }
 
     let content = '';

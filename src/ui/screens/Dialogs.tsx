@@ -73,7 +73,7 @@ export const ProviderListDialog: React.FC<ProviderListDialogProps> = ({ provider
   const theme = themeManager.getCurrentTheme();
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.escape) {
       onClose();
       return;
@@ -147,7 +147,7 @@ export const ProviderDialog: React.FC<ProviderDialogProps> = ({ initialProvider,
   
   const [activeField, setActiveField] = useState(0); // 0: Name, 1: Base URL, 2: API Key, 3: Description, 4: Test button, 5: Save button
   const [testResult, setTestResult] = useState<string | null>(null);
-  const [isTesting, setIsTesting] = useState(false);
+  const [_isTesting, setIsTesting] = useState(false);
 
   useInput(async (input: string, key: any) => {
     if (key.escape) {
@@ -290,7 +290,7 @@ export const AddModelDialog: React.FC<AddModelDialogProps> = ({ providers, onSub
 
   const [activeField, setActiveField] = useState(0); // 0: Model ID, 1: Display Name, 2: Provider Index, 3: Description, 4: Category, 5: Context, 6: Max Output, 7: Submit/Save Button
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.escape) {
       onClose();
       return;
@@ -431,7 +431,7 @@ export const ModelSwitcherDialog: React.FC<ModelSwitcherDialogProps> = ({ models
   const theme = themeManager.getCurrentTheme();
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.escape) {
       onClose();
       return;
@@ -510,7 +510,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({ currentThemeId, 
   const [streaming, setStreaming] = useState(currentStreaming);
   const [activeItem, setActiveItem] = useState<0 | 1>(0); // 0: Theme select, 1: Streaming toggle
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.escape) {
       onClose();
       return;
@@ -530,7 +530,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({ currentThemeId, 
     }
     if (activeItem === 1) {
       // Toggle streaming on Space or Left/Right
-      if (input === ' ' || key.leftArrow || key.rightArrow) {
+      if (_input === ' ' || key.leftArrow || key.rightArrow) {
         setStreaming(prev => !prev);
       }
     }
@@ -577,10 +577,9 @@ interface PermissionsPromptDialogProps {
 }
 
 export const PermissionsPromptDialog: React.FC<PermissionsPromptDialogProps> = ({ toolName, args, onAllowOnce, onAlwaysAllow, onDeny }) => {
-  const theme = themeManager.getCurrentTheme();
   const [selectedIndex, setSelectedIndex] = useState(0); // 0: Allow Once, 1: Always Allow, 2: Deny
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.upArrow || key.leftArrow) {
       setSelectedIndex(prev => (prev > 0 ? prev - 1 : 2));
       return;
@@ -641,7 +640,7 @@ export const AgentSwitcherDialog: React.FC<AgentSwitcherDialogProps> = ({ agents
   const theme = themeManager.getCurrentTheme();
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.escape) {
       onClose();
       return;
@@ -715,7 +714,7 @@ export const HistorySwitcherDialog: React.FC<HistorySwitcherDialogProps> = ({ se
   const theme = themeManager.getCurrentTheme();
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.escape) {
       onClose();
       return;
@@ -790,7 +789,7 @@ export const SkillsListDialog: React.FC<SkillsListDialogProps> = ({ skills, onCl
   const theme = themeManager.getCurrentTheme();
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.escape || key.return) {
       onClose();
       return;
@@ -874,7 +873,7 @@ export const McpListDialog: React.FC<McpListDialogProps> = ({ servers, onClose }
   const theme = themeManager.getCurrentTheme();
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.escape || key.return) {
       onClose();
       return;
@@ -987,7 +986,7 @@ export const ToolsListDialog: React.FC<ToolsListDialogProps> = ({ onClose }) => 
   const categories = ['all', 'file', 'shell', 'web', 'typescript', 'agent', 'skill', 'utility', 'mcp'];
   const [catIndex, setCatIndex] = useState(0);
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.escape) { onClose(); return; }
     if (key.upArrow) {
       setSelectedIndex(prev => (prev > 0 ? prev - 1 : filteredSchemas.length - 1));
@@ -1113,7 +1112,7 @@ export const ToolPermissionsDialog: React.FC<ToolPermissionsDialogProps> = ({ on
   const schemas = ToolManager.getToolSchemas();
   const permLevels: Array<'always_allow' | 'allow_once' | 'ask' | 'deny'> = ['always_allow', 'allow_once', 'ask', 'deny'];
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.escape) { onClose(); return; }
     if (key.upArrow) {
       setSelectedIndex(prev => prev > 0 ? prev - 1 : schemas.length - 1);
@@ -1208,7 +1207,7 @@ export const QuestionDialog: React.FC<QuestionDialogProps> = ({ question, option
   const theme = themeManager.getCurrentTheme();
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.upArrow) {
       setSelectedIndex(prev => (prev > 0 ? prev - 1 : options.length - 1));
       return;
@@ -1266,7 +1265,7 @@ export const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({ initia
   const [filePath, setFilePath] = useState('backup.json');
   const [activeField, setActiveField] = useState(0); // 0: Action Select (mode), 1: File Path, 2: Run button
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.escape) {
       onClose();
       return;
@@ -1368,8 +1367,7 @@ export const ThemeSwitcherDialog: React.FC<ThemeSwitcherDialogProps> = ({ onPrev
   const currentTheme = themeManager.getCurrentTheme();
   const themeIds = Object.keys(BUILT_IN_THEMES);
   const [selectedIndex, setSelectedIndex] = useState(themeIds.indexOf(currentTheme.id) !== -1 ? themeIds.indexOf(currentTheme.id) : 0);
-  const [initialThemeId] = useState(currentTheme.id);
-
+  const initialThemeId = currentTheme.id;
   const VP = 8;
   const viewStart = Math.max(0, Math.min(selectedIndex - Math.floor(VP / 2), themeIds.length - VP));
   const visibleThemeIds = themeIds.slice(viewStart, viewStart + VP);
@@ -1379,7 +1377,7 @@ export const ThemeSwitcherDialog: React.FC<ThemeSwitcherDialogProps> = ({ onPrev
     onPreview(themeIds[selectedIndex]);
   }, [selectedIndex]);
 
-  useInput((input: string, key: any) => {
+  useInput((_input: string, key: any) => {
     if (key.escape) {
       onClose(initialThemeId);
       return;

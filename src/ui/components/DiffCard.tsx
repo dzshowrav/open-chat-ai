@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Text } from 'ink';
 import { themeManager } from '../theme/themeManager.js';
 import path from 'path';
@@ -182,17 +182,6 @@ function detectLanguage(filePath: string): string {
   return map[ext] || ext.toUpperCase() || 'Text';
 }
 
-function getFileIcon(filePath: string): string {
-  const ext = path.extname(filePath).toLowerCase().slice(1);
-  const icons: Record<string, string> = {
-    ts: '󰛦', tsx: '󰛦', js: '󰌞', jsx: '󰌞',
-    py: '󰌠', rb: '󰴭', go: '󰟓', rs: '󱘗',
-    json: '󰘦', yaml: '󰈚', yml: '󰈚', md: '󰍔',
-    html: '󰌝', css: '󰌜', sh: '󰆍', sql: '󰆼',
-  };
-  return icons[ext] || '󰈙';
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Color utilities for diff lines
 // ─────────────────────────────────────────────────────────────────────────────
@@ -201,12 +190,6 @@ function getLineColor(op: HunkLine['op']): string {
   if (op === 'delete') return '#ff6b6b';
   if (op === 'insert') return '#51cf66';
   return '#718096';
-}
-
-function getLineBg(op: HunkLine['op']): string {
-  if (op === 'delete') return '#3b1219';
-  if (op === 'insert') return '#0d2b12';
-  return '';
 }
 
 function getLinePrefix(op: HunkLine['op']): string {
@@ -238,18 +221,10 @@ export const DiffCard: React.FC<DiffCardProps> = ({
   targetContent,
   replacementContent,
   isNewFile = false,
-  isActive = false,
+  isActive: _isActive = false,
 }) => {
   const theme = themeManager.getCurrentTheme();
-  const [expanded, setExpanded] = useState(true);
-  const [animFrame, setAnimFrame] = useState(0);
-
-  // Subtle animation for the "active" (just-applied) state
-  useEffect(() => {
-    if (!isActive) return;
-    const t = setInterval(() => setAnimFrame(f => f + 1), 150);
-    return () => clearInterval(t);
-  }, [isActive]);
+  const [expanded, _setExpanded] = useState(true);
 
   // Parse diff
   const oldLines = (targetContent || '').split('\n');
@@ -276,25 +251,13 @@ export const DiffCard: React.FC<DiffCardProps> = ({
   const totalChangedLines = addedCount + removedCount;
 
   const lang = detectLanguage(filePath);
-  const icon = getFileIcon(filePath);
   const fileName = path.basename(filePath);
   const dirPart = path.dirname(filePath);
   const shortDir = dirPart === '.' ? '' : dirPart.length > 30
     ? '...' + dirPart.slice(-27)
     : dirPart + '/';
 
-  // Pulse color for active indicator
-  const pulseColors = ['#51cf66', '#69db7c', '#8ce99a', '#69db7c'];
-  const pulseColor = pulseColors[animFrame % pulseColors.length];
-
-  // Max visible lines to avoid terminal overflow
-  const MAX_VISIBLE_LINES = 40;
   const allDiffLines = hunks.flatMap(h => h.lines);
-  const isTruncated = !expanded && allDiffLines.length > 8;
-  const visibleHunks = expanded ? hunks : hunks.slice(0, 1).map(h => ({
-    ...h,
-    lines: h.lines.slice(0, 6),
-  }));
 
   const lineNumWidth = Math.max(
     ...allDiffLines.map(l => Math.max(l.oldLineNum ?? 0, l.newLineNum ?? 0))

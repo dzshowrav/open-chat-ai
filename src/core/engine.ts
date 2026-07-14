@@ -5,7 +5,6 @@ import { DatabaseSync } from 'node:sqlite';
 import { registerBuiltInTools } from '../tools/impl/index.js';
 import { McpManager } from '../mcp/mcpManager.js';
 import { APP_VERSION } from './constants.js';
-import { themeManager } from '../ui/theme/themeManager.js';
 import { fileURLToPath } from 'node:url';
 import path from 'path';
 
@@ -60,9 +59,6 @@ export class AppEngine {
 
       // Initialize MCP servers
       await McpManager.init();
-
-      // Initialize Termux terminal colors (synchronous — runs before Ink renders)
-      themeManager.init();
 
       // Trigger start event
       eventBus.emit('app:start', undefined);

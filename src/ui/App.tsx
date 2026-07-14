@@ -43,9 +43,10 @@ const renderPromptPreview = (text: string, cursorIdx: number) => {
   if (!text) {
     return <Text color="gray">Ask AI anything... (Type / for commands)</Text>;
   }
-  const before = text.slice(0, cursorIdx);
-  const at = text[cursorIdx] || ' ';
-  const after = text.slice(cursorIdx + 1);
+  const safeIdx = Math.min(cursorIdx, text.length);
+  const before = text.slice(0, safeIdx);
+  const at = text[safeIdx] || ' ';
+  const after = text.slice(safeIdx + 1);
   return (
     <Text wrap="wrap">
       {before}
@@ -62,6 +63,14 @@ export const App: React.FC = () => {
   const rows = stdout?.rows || 24;
   const isMobile = rows < 18;
   const isUltraCompact = rows < 15;
+
+  // Refs synced on every render — keep terminal dimensions for event handlers
+  const renderColsRef = useRef(stdout?.columns || 80);
+  const renderRowsRef = useRef(stdout?.rows || 24);
+  const renderIsMobileRef = useRef(isMobile);
+  renderColsRef.current = stdout?.columns || 80;
+  renderRowsRef.current = stdout?.rows || 24;
+  renderIsMobileRef.current = isMobile;
 
   const activeAbortController = React.useRef<AbortController | null>(null);
   const lastEscPress = React.useRef<number>(0);
@@ -85,11 +94,11 @@ export const App: React.FC = () => {
   const enterTimerRef = useRef<any>(null); // long-press Enter detection timer id
   const enterCancelledRef = useRef(false);
 
-  // Computed input offset for cursor wrap calculations
-  // Matches the actual Ink layout: outer padding + border + inner padding + "> " prefix
+  // Computed input offset — reads stdout.rows directly to avoid closure staleness on resize
   const getInputOffset = (): number => {
-    if (isMobile) return 4;  // paddingX={1}(2) + "> "(2) = 4
-    return 8;                 // paddingX={1}(2) + border(2) + paddingX={1}(2) + "> "(2) = 8
+    const mobile = (stdout?.rows || 24) < 18;
+    if (mobile) return 4;
+    return 8;
   };
   // Char batching: accumulates rapid chars and flushes after 20ms silence
   const pasteBufRef = useRef('');
@@ -134,6 +143,14 @@ export const App: React.FC = () => {
       }
     }
   }, [theme.id, theme.backgroundColor, theme.textColor]);
+
+  // Clamp cursor to prompt bounds after terminal resize
+  useEffect(() => {
+    const clamped = Math.min(cursorPos, prompt.length);
+    if (clamped !== cursorPos) {
+      setCursorPos(clamped);
+    }
+  }, [stdout?.columns, stdout?.rows, prompt.length]);
 
   useEffect(() => {
     const handleExit = () => {
@@ -453,8 +470,8 @@ export const App: React.FC = () => {
       const before = curPrompt.slice(0, cur);
       const curLineStart = before.lastIndexOf('\n') + 1;
       const posInLine = cur - curLineStart;
-      // Computed wrap width matching Ink's actual layout
-      const wrapWidth = Math.max(10, (stdout?.columns || 80) - getInputOffset());
+      // Use render-time cols for consistent wrap calculation with text layout
+      const wrapWidth = Math.max(10, (renderColsRef.current || 80) - getInputOffset());
       // Ink's <Text wrap="wrap"> wraps continuous text at wrapWidth columns.
       // Visual row = floor(pos / W), visual col = pos % W.
       const vr = Math.floor(posInLine / wrapWidth);
@@ -487,8 +504,8 @@ export const App: React.FC = () => {
       const lineEnd = afterNl === -1 ? curPrompt.length : afterNl;
       const lineLen = lineEnd - curLineStart;
       const posInLine = cur - curLineStart;
-      // Computed wrap width matching Ink's actual layout
-      const wrapWidth = Math.max(10, (stdout?.columns || 80) - getInputOffset());
+      // Use render-time cols for consistent wrap calculation with text layout
+      const wrapWidth = Math.max(10, (renderColsRef.current || 80) - getInputOffset());
       const vr = Math.floor(posInLine / wrapWidth);
       const vc = posInLine % wrapWidth;
       const visualRows = Math.max(1, Math.ceil(lineLen / wrapWidth));

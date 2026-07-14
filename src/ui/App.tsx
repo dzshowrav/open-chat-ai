@@ -84,6 +84,13 @@ export const App: React.FC = () => {
   cursorRef.current = cursorPos;
   const enterTimerRef = useRef<any>(null); // long-press Enter detection timer id
   const enterCancelledRef = useRef(false);
+
+  // Computed input offset for cursor wrap calculations
+  // Matches the actual Ink layout: outer padding + border + inner padding + "> " prefix
+  const getInputOffset = (): number => {
+    if (isMobile) return 4;  // paddingX={1}(2) + "> "(2) = 4
+    return 8;                 // paddingX={1}(2) + border(2) + paddingX={1}(2) + "> "(2) = 8
+  };
   // Char batching: accumulates rapid chars and flushes after 20ms silence
   const pasteBufRef = useRef('');
   const pasteTimerRef = useRef<any>(null);
@@ -128,6 +135,7 @@ export const App: React.FC = () => {
     const handleExit = () => {
       process.stdout.write('\x1b]110\x07');
       process.stdout.write('\x1b]111\x07');
+      process.stdout.write('\x1b[?25h');
     };
     process.on('exit', handleExit);
     return () => {
@@ -335,6 +343,11 @@ export const App: React.FC = () => {
       return;
     }
 
+    // When command palette is open, block all non-palette input
+    if (showCommandPalette) {
+      return;
+    }
+
     if (key.return) {
       flushPasteBuffer();
       if (key.shift || key.ctrl) {
@@ -402,28 +415,30 @@ export const App: React.FC = () => {
       return;
     }
 
-    // Arrow keys — normal cursor movement (paste badge stays visible)
+    // Arrow keys — normal cursor movement
     if (key.leftArrow) {
+      flushPasteBuffer();
       const newCursor = Math.max(0, cursorRef.current - 1);
       cursorRef.current = newCursor;
       setCursorPos(newCursor);
       return;
     }
     if (key.rightArrow) {
+      flushPasteBuffer();
       const newCursor = Math.min(promptRef.current.length, cursorRef.current + 1);
       cursorRef.current = newCursor;
       setCursorPos(newCursor);
       return;
     }
     if (key.upArrow) {
+      flushPasteBuffer();
       const curPrompt = promptRef.current;
       const cur = cursorRef.current;
       const before = curPrompt.slice(0, cur);
       const curLineStart = before.lastIndexOf('\n') + 1;
       const posInLine = cur - curLineStart;
-      // Desktop: root paddingX(1→2) + border(2) + prompt padding(2) + "> "(2) = 8
-      // Mobile:  none + none + padding(2) + "> "(2) = 4
-      const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 4 : 8));
+      // Computed wrap width matching Ink's actual layout
+      const wrapWidth = Math.max(10, (stdout?.columns || 80) - getInputOffset());
       // Ink's <Text wrap="wrap"> wraps continuous text at wrapWidth columns.
       // Visual row = floor(pos / W), visual col = pos % W.
       const vr = Math.floor(posInLine / wrapWidth);
@@ -447,6 +462,7 @@ export const App: React.FC = () => {
       return;
     }
     if (key.downArrow) {
+      flushPasteBuffer();
       const curPrompt = promptRef.current;
       const cur = cursorRef.current;
       const before = curPrompt.slice(0, cur);
@@ -455,9 +471,8 @@ export const App: React.FC = () => {
       const lineEnd = afterNl === -1 ? curPrompt.length : afterNl;
       const lineLen = lineEnd - curLineStart;
       const posInLine = cur - curLineStart;
-      // Desktop: root paddingX(1→2) + border(2) + prompt padding(2) + "> "(2) = 8
-      // Mobile:  none + none + padding(2) + "> "(2) = 4
-      const wrapWidth = Math.max(10, (stdout?.columns || 80) - (isMobile ? 4 : 8));
+      // Computed wrap width matching Ink's actual layout
+      const wrapWidth = Math.max(10, (stdout?.columns || 80) - getInputOffset());
       const vr = Math.floor(posInLine / wrapWidth);
       const vc = posInLine % wrapWidth;
       const visualRows = Math.max(1, Math.ceil(lineLen / wrapWidth));
@@ -624,9 +639,10 @@ export const App: React.FC = () => {
             const success = await engine.uninstall();
             
             stateManager.setState({ activeToolName: null });
-            if (success) {
+              if (success) {
               stateManager.setState({ errorMsg: 'Uninstallation complete. Goodbye!' });
               setTimeout(() => {
+                process.stdout.write('\x1b[?25h');
                 exit();
                 process.exit(0);
               }, 3000);
@@ -655,9 +671,10 @@ export const App: React.FC = () => {
             const result = await engine.updateToLatest();
             
             stateManager.setState({ activeToolName: null });
-            if (result.success) {
+              if (result.success) {
               stateManager.setState({ errorMsg: 'Update successful! Please restart OpenChat AI to apply changes.' });
               setTimeout(() => {
+                process.stdout.write('\x1b[?25h');
                 exit();
                 process.exit(0);
               }, 3000);
@@ -678,6 +695,7 @@ export const App: React.FC = () => {
       stateManager.setState({ errorMsg: 'Slash commands: /update latest, /uninstall, /provider api, /add model, /all models, /agents, /skills, /history, /mcp, /tools, /permissions, /settings, /themes, /backup, /restore, /help, /exit' });
     } else if (cmd === '/exit') {
       terminateMarkdownWorker();
+      process.stdout.write('\x1b[?25h');
       exit();
       setTimeout(() => process.exit(0), 50);
     } else {
@@ -923,7 +941,6 @@ export const App: React.FC = () => {
   };
 
   const handleSessionSelect = (sessionId: number) => {
-    process.stdout.write('\x1b[2J\x1b[H');
     stateManager.setState({ activeSessionId: sessionId, currentScreen: 'chat' });
     setMessages(sessionRepo.getMessages(sessionId));
     setActiveDialog('none');

@@ -17,15 +17,32 @@ interface TextInputProps {
 }
 
 export const TextInput: React.FC<TextInputProps> = ({ value, onChange, mask, placeholder = '', active = false }) => {
+  const [cursorIdx, setCursorIdx] = useState(value.length);
+
+  useEffect(() => {
+    if (cursorIdx > value.length) {
+      setCursorIdx(value.length);
+    }
+  }, [value]);
+
   useInput((input: string, key: any) => {
     if (!active) return;
-    
-    if (key.backspace || key.delete) {
-      onChange(value.slice(0, -1));
+
+    if (key.leftArrow) {
+      setCursorIdx(prev => Math.max(0, prev - 1));
+    } else if (key.rightArrow) {
+      setCursorIdx(prev => Math.min(value.length, prev + 1));
+    } else if (key.backspace || key.delete) {
+      if (cursorIdx > 0) {
+        onChange(value.slice(0, cursorIdx - 1) + value.slice(cursorIdx));
+        setCursorIdx(prev => prev - 1);
+      }
     } else if (key.return || key.escape || key.upArrow || key.downArrow || key.tab) {
-      // Let parent handle navigation triggers
+      // Let parent handle navigation
     } else if (input) {
-      onChange(value + input);
+      const newValue = value.slice(0, cursorIdx) + input + value.slice(cursorIdx);
+      onChange(newValue);
+      setCursorIdx(prev => prev + input.length);
     }
   });
 
@@ -34,8 +51,13 @@ export const TextInput: React.FC<TextInputProps> = ({ value, onChange, mask, pla
 
   return (
     <Text color={active ? 'cyan' : 'white'}>
-      {value.length === 0 ? <Text color="gray">{placeholder}</Text> : displayValue}
-      <Text color="cyan">{cursor}</Text>
+      {value.length === 0 ? <Text color="gray">{placeholder}</Text> : (
+        <>
+          {displayValue.slice(0, cursorIdx)}
+          <Text color="cyan">{cursor}</Text>
+          {displayValue.slice(cursorIdx)}
+        </>
+      )}
     </Text>
   );
 };

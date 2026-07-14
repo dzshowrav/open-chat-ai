@@ -1,66 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
+import TextInput from 'ink-text-input';
 import { themeManager } from '../theme/themeManager.js';
 import { Provider, Model } from '../../types/index.js';
 import { BUILT_IN_THEMES } from '../../core/constants.js';
 import { ApiEngine } from '../../api/apiEngine.js';
 import { ToolManager } from '../../tools/toolManager.js';
 import { PermissionRepository } from '../../database/repositories/permissionRepository.js';
-
-// --- Reusable custom text input component ---
-interface TextInputProps {
-  value: string;
-  onChange: (val: string) => void;
-  mask?: string;
-  placeholder?: string;
-  active?: boolean;
-}
-
-export const TextInput: React.FC<TextInputProps> = ({ value, onChange, mask, placeholder = '', active = false }) => {
-  const [cursorIdx, setCursorIdx] = useState(value.length);
-
-  useEffect(() => {
-    if (cursorIdx > value.length) {
-      setCursorIdx(value.length);
-    }
-  }, [value]);
-
-  useInput((input: string, key: any) => {
-    if (!active) return;
-
-    if (key.leftArrow) {
-      setCursorIdx(prev => Math.max(0, prev - 1));
-    } else if (key.rightArrow) {
-      setCursorIdx(prev => Math.min(value.length, prev + 1));
-    } else if (key.backspace || key.delete) {
-      if (cursorIdx > 0) {
-        onChange(value.slice(0, cursorIdx - 1) + value.slice(cursorIdx));
-        setCursorIdx(prev => prev - 1);
-      }
-    } else if (key.return || key.escape || key.upArrow || key.downArrow || key.tab) {
-      // Let parent handle navigation
-    } else if (input) {
-      const newValue = value.slice(0, cursorIdx) + input + value.slice(cursorIdx);
-      onChange(newValue);
-      setCursorIdx(prev => prev + input.length);
-    }
-  });
-
-  const displayValue = mask ? mask.repeat(value.length) : value;
-  const cursor = active ? '█' : '';
-
-  return (
-    <Text color={active ? 'cyan' : 'white'}>
-      {value.length === 0 ? <Text color="gray">{placeholder}</Text> : (
-        <>
-          {displayValue.slice(0, cursorIdx)}
-          <Text color="cyan">{cursor}</Text>
-          {displayValue.slice(cursorIdx)}
-        </>
-      )}
-    </Text>
-  );
-};
 
 // --- Provider List Dialog ---
 interface ProviderListDialogProps {
@@ -214,19 +160,19 @@ export const ProviderDialog: React.FC<ProviderDialogProps> = ({ initialProvider,
       <Box flexDirection="column" marginY={0.5}>
         <Box flexDirection="row" marginY={0.2}>
           <Text color={activeField === 0 ? 'cyan' : 'white'} bold={activeField === 0}>{"Name: ".padEnd(7)}</Text>
-          <TextInput value={name} onChange={setName} active={activeField === 0} placeholder="e.g. OpenCode Zen" />
+          <TextInput value={name} onChange={setName} focus={activeField === 0} placeholder="e.g. OpenCode Zen" />
         </Box>
         <Box flexDirection="row" marginY={0.2}>
           <Text color={activeField === 1 ? 'cyan' : 'white'} bold={activeField === 1}>{"URL:  ".padEnd(7)}</Text>
-          <TextInput value={baseUrl} onChange={setBaseUrl} active={activeField === 1} placeholder="https://api.openai.com/v1" />
+          <TextInput value={baseUrl} onChange={setBaseUrl} focus={activeField === 1} placeholder="https://api.openai.com/v1" />
         </Box>
         <Box flexDirection="row" marginY={0.2}>
           <Text color={activeField === 2 ? 'cyan' : 'white'} bold={activeField === 2}>{"Key:  ".padEnd(7)}</Text>
-          <TextInput value={apiKey} onChange={setApiKey} active={activeField === 2} mask="*" placeholder="sk-..." />
+          <TextInput value={apiKey} onChange={setApiKey} focus={activeField === 2} mask="*" placeholder="sk-..." />
         </Box>
         <Box flexDirection="row" marginY={0.2}>
           <Text color={activeField === 3 ? 'cyan' : 'white'} bold={activeField === 3}>{"Desc: ".padEnd(7)}</Text>
-          <TextInput value={description} onChange={setDescription} active={activeField === 3} placeholder="Optional notes" />
+          <TextInput value={description} onChange={setDescription} focus={activeField === 3} placeholder="Optional notes" />
         </Box>
       </Box>
 
@@ -372,11 +318,11 @@ export const AddModelDialog: React.FC<AddModelDialogProps> = ({ providers, onSub
       <Box flexDirection="column" marginY={0.5}>
         <Box flexDirection="row" marginY={0.2}>
           <Text color={activeField === 0 ? 'cyan' : 'white'} bold={activeField === 0}>{"ID:     ".padEnd(9)}</Text>
-          <TextInput value={modelId} onChange={setModelId} active={activeField === 0} placeholder="e.g. gpt-4o" />
+          <TextInput value={modelId} onChange={setModelId} focus={activeField === 0} placeholder="e.g. gpt-4o" />
         </Box>
         <Box flexDirection="row" marginY={0.2}>
           <Text color={activeField === 1 ? 'cyan' : 'white'} bold={activeField === 1}>{"Name:   ".padEnd(9)}</Text>
-          <TextInput value={displayName} onChange={setDisplayName} active={activeField === 1} placeholder="e.g. GPT-4o" />
+          <TextInput value={displayName} onChange={setDisplayName} focus={activeField === 1} placeholder="e.g. GPT-4o" />
         </Box>
         <Box flexDirection="row" marginY={0.2}>
           <Text color={activeField === 2 ? 'cyan' : 'white'} bold={activeField === 2}>{"Prov:   ".padEnd(9)}</Text>
@@ -386,7 +332,7 @@ export const AddModelDialog: React.FC<AddModelDialogProps> = ({ providers, onSub
         </Box>
         <Box flexDirection="row" marginY={0.2}>
           <Text color={activeField === 3 ? 'cyan' : 'white'} bold={activeField === 3}>{"Desc:   ".padEnd(9)}</Text>
-          <TextInput value={description} onChange={setDescription} active={activeField === 3} placeholder="e.g. Standard OpenAI model" />
+          <TextInput value={description} onChange={setDescription} focus={activeField === 3} placeholder="e.g. Standard OpenAI model" />
         </Box>
         <Box flexDirection="row" marginY={0.2}>
           <Text color={activeField === 4 ? 'cyan' : 'white'} bold={activeField === 4}>{"Cat:    ".padEnd(9)}</Text>
@@ -396,11 +342,11 @@ export const AddModelDialog: React.FC<AddModelDialogProps> = ({ providers, onSub
         </Box>
         <Box flexDirection="row" marginY={0.2}>
           <Text color={activeField === 5 ? 'cyan' : 'white'} bold={activeField === 5}>{"CtxLim: ".padEnd(9)}</Text>
-          <TextInput value={contextWindow} onChange={setContextWindow} active={activeField === 5} placeholder="128000" />
+          <TextInput value={contextWindow} onChange={setContextWindow} focus={activeField === 5} placeholder="128000" />
         </Box>
         <Box flexDirection="row" marginY={0.2}>
           <Text color={activeField === 6 ? 'cyan' : 'white'} bold={activeField === 6}>{"MaxOut: ".padEnd(9)}</Text>
-          <TextInput value={maxOutput} onChange={setMaxOutput} active={activeField === 6} placeholder="4096" />
+          <TextInput value={maxOutput} onChange={setMaxOutput} focus={activeField === 6} placeholder="4096" />
         </Box>
       </Box>
 
@@ -1331,7 +1277,7 @@ export const BackupRestoreDialog: React.FC<BackupRestoreDialogProps> = ({ initia
           <TextInput 
             value={filePath} 
             onChange={setFilePath} 
-            active={activeField === 1} 
+            focus={activeField === 1} 
             placeholder="e.g. backup.json" 
           />
         </Box>

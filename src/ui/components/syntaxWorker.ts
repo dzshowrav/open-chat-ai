@@ -25,14 +25,14 @@
 
 import { parentPort } from 'worker_threads';
 import { highlight as _cliHighlight, supportsLanguage as _supportsLang } from 'cli-highlight';
-import { Chalk } from 'chalk';
+import chalk from 'chalk';
 
 // ─── Force ANSI colors inside worker thread (no TTY) ────────────────────────
 process.env.FORCE_COLOR = '3';
 
 // ─── Initialize chalk with full 16M color support ────────────────────────────
-// Use the Chalk constructor to force level 3 (Truecolor) regardless of TTY
-const c = new Chalk({ level: 3 });
+// Use the Instance constructor to force level 3 (Truecolor) regardless of TTY
+const c = new chalk.Instance({ level: 3 });
 
 // ─── Language alias normalizer ────────────────────────────────────────────────
 const LANG_ALIASES: Record<string, string> = {

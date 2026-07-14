@@ -64,9 +64,9 @@ function getWorker(): Worker | null {
       pending.resolve(msg.rendered ?? '');
     });
 
-    _worker.on('error', (err) => {
+    _worker.on('error', (err: unknown) => {
       // Worker crashed — drain all pending with raw text fallback
-      console.error('[MarkdownWorker] Worker error:', err.message);
+      console.error('[MarkdownWorker] Worker error:', err instanceof Error ? err.message : String(err));
       _workerFailed = true;
       _worker = null;
       for (const [, cb] of _pending) {

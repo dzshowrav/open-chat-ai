@@ -94,6 +94,10 @@ export const App: React.FC = () => {
   // Char batching: accumulates rapid chars and flushes after 20ms silence
   const pasteBufRef = useRef('');
   const pasteTimerRef = useRef<any>(null);
+  // Paste detection: tracks input timing to distinguish paste bursts from typing
+  const lastInputTimeRef = useRef(0);
+  const isPastingRef = useRef(false);
+  const pasteCharCountRef = useRef(0);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -220,6 +224,9 @@ export const App: React.FC = () => {
       setPrompt(newPrompt);
       setCursorPos(newCursor);
     }
+    // Reset paste detection after flush — burst is done
+    isPastingRef.current = false;
+    pasteCharCountRef.current = 0;
   };
 
   // Main UI Keyboard listener
@@ -350,6 +357,15 @@ export const App: React.FC = () => {
 
     if (key.return) {
       flushPasteBuffer();
+      // During a paste burst, treat \r/\n as literal newline, not submit
+      if (isPastingRef.current) {
+        const newPrompt = promptRef.current + '\n';
+        promptRef.current = newPrompt;
+        cursorRef.current = newPrompt.length;
+        setPrompt(newPrompt);
+        setCursorPos(newPrompt.length);
+        return;
+      }
       if (key.shift || key.ctrl) {
         // Shift+Enter / Ctrl+Enter submits
         if (enterTimerRef.current) {
@@ -502,9 +518,32 @@ export const App: React.FC = () => {
         enterTimerRef.current = null;
         enterCancelledRef.current = true;
       }
+
+      // Paste detection: if chars arrive faster than 50ms apart, it's a paste burst
+      const now = Date.now();
+      if (now - lastInputTimeRef.current < 50) {
+        pasteCharCountRef.current++;
+        if (pasteCharCountRef.current >= 3) {
+          isPastingRef.current = true;
+        }
+      } else {
+        pasteCharCountRef.current = 0;
+        isPastingRef.current = false;
+      }
+      lastInputTimeRef.current = now;
+
       if (promptRef.current === '' && input === '/') {
         if (state.currentScreen === 'home') process.stdout.write('\x1b[2J\x1b[H');
         setShowCommandPalette(true);
+        // Flush any accumulated paste chars immediately and block further accumulation
+        if (pasteTimerRef.current) {
+          clearTimeout(pasteTimerRef.current);
+          pasteTimerRef.current = null;
+        }
+        pasteBufRef.current = '';
+        isPastingRef.current = false;
+        pasteCharCountRef.current = 0;
+        return;
       }
       // Accumulate in paste buffer — flush after 20ms of silence
       // Fast chars (paste) → batch into one setPrompt call
@@ -1296,11 +1335,19 @@ export const App: React.FC = () => {
               state={state}
               query={prompt.startsWith('/') ? prompt.slice(1) : prompt} 
               onSelect={(cmd) => {
+                if (pasteTimerRef.current) clearTimeout(pasteTimerRef.current);
+                pasteBufRef.current = '';
+                isPastingRef.current = false;
+                pasteCharCountRef.current = 0;
                 setShowCommandPalette(false);
                 setPrompt('');
                 executeSlashCommand(cmd);
               }}
               onClose={() => {
+                if (pasteTimerRef.current) clearTimeout(pasteTimerRef.current);
+                pasteBufRef.current = '';
+                isPastingRef.current = false;
+                pasteCharCountRef.current = 0;
                 setShowCommandPalette(false);
                 setPrompt('');
               }}
